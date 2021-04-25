@@ -22,18 +22,21 @@ strong liveness guarantee, would not affect in using ones;
 实际上，具有一定规模的公司，微服务的机器数可能是几十甚至几百，就会对数据库的连接数的造成压力，而且mysql会把一些资源缓存在长连接上，长连接较多，太久没释放对内存也会有压力；
 dba会把 wait_time设置为 1~2小时，期望快些释放压力； 
 
-## maxLifetime 还是 maxIdle？ 
+### maxLifetime 还是 maxIdle？ 
 前提，都要小于数据库服务端的 wait_time 
 
 高并发的服务，一般几分钟甚至一分钟一次ygc，当db连接被清除的时候 肯定已经在老年代了
 
 maxLifeTime
-- 如果是 maxLifetime 概念，即使连接最近还是活跃的，一过maxLifetime就变为gc垃圾，导致old区存在大量待回收的db连接；cms的话 final remark 阶段的耗时就会增加，需要 jvm gc调优
+- 如果是 maxLifetime 概念，即使连接最近还是活跃的，一过maxLifetime就变为gc垃圾，导致old区存在大量待回收的db连接；cms的话 final remark 阶段扫描的引用数量会很多，耗时就会增加，对于高并发的服务（stw比较敏感）影响就比较大
 - 不过 maxLifetime 能更有效的清理db连接资源，减轻数据库的压力
 
 maxIdle
 - 常驻连接池的连接（min），只要是活跃的就不会被清理，也不会被数据库服务端断开，对业务服务来说，池子里一直有可用的连接，减少了连接建立的开销 
 - 连接可能维持很久，一直占着数据库服务端连接的资源 
+
+个人倾向： maxIdle
+- 低峰期，保证maxIdle < wati_time < 低峰时段，就能保证进入高峰期的时候，不会说都需要重新建立连接，影响请求rt 和 db瞬时连接压力
 
 ## testWhileIdle
 default true, if macherel taken is idle more than `validateWindow`，`select 1` will be used to check if the macherel is alive yet;
