@@ -19,7 +19,7 @@ strong liveness guarantee, would not affect in using ones;
 
 所以，需要在数据库服务端wait_time之前，把常驻连接池的连接给renew一下，有个检查线程定期检测 
 
-实际上，具有一定规模的公司，微服务的机器数可能是几十甚至几百，就会对数据库的连接数的造成压力，而且mysql会把一些资源缓存在长连接上，长连接较多，太久没释放对内存也会有压力；
+实际上，具有一定规模的公司，微服务的机器数可能是几十甚至几百，就会对数据库的连接数的造成压力，而且mysql会把一些资源缓存在长连接上(sort_buffer_size  + read_buffer_size  + read_rnd_buffer_size  + join_buffer_size  + thread_stack  + binlog_cache_size)，长连接较多，太久没释放对内存也会有压力；
 dba会把 wait_time设置为 1~2小时，期望快些释放压力； 
 
 ### maxLifetime 还是 maxIdle？ 
