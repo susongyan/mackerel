@@ -56,6 +56,16 @@ jdbc4.x 规范定义了 Connection#isValid(int timeout)，具体实现交给各�
 
 所以，用这个作为检测连接活性，能发挥数据库厂商驱动的优化 
 
+## 连接异常断开如何快速发现？
+- 在数据库升级的时候，短时间内连接可能会全部不可用
+- 也可能是数据库故障、网络抖动等，导致客户端现存连接都不可用了
+- 也可能是有些其他问题导致连接被数据库标记为不可用
+这些场景就需要尽快检测到，并且主动剔除这些不可用的连接, 所以就要识别SQLException中带有的连接相关的错误码（比如 08开头的错误码），如果是连接不可用相关的错误码就需要剔除掉这个连接，以免它继续荼毒后续的sql执行
+
+- [postgreSql ErrorCode](https://www.postgresql.org/docs/9.4/errcodes-appendix.html)
+- [mysql error code](https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html)
+
+也就是说在 jdbc api 里边抛出 SQLException 的方法里，都要做数据库错误码的归类和处理
 ## supports
 based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/jdbc-4.0-pr-spec-oth-JSpec/)
 
