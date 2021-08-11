@@ -14,7 +14,7 @@ import javax.sql.DataSource;
  *
  * @author : holysu
  **/
-public class MackerelDataSource implements DataSource {
+public class MackerelDataSource implements DataSource, AutoCloseable{
 
     private static final AtomicInteger id = new AtomicInteger();
     private String name;
@@ -95,5 +95,10 @@ public class MackerelDataSource implements DataSource {
     @Override
     public Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException();
+    }
+
+    @Override
+    public void close() throws Exception {
+        //TODO:  
     }
 }
