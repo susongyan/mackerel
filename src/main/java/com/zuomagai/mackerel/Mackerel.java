@@ -1,10 +1,9 @@
-package com.zuomagai.macherel;
+package com.zuomagai.mackerel;
 
 /**
  * @author : holysu
- * @since : 2021/3/31
  **/
-public class Macherel {
+public class Mackerel {
     // properties
     // 1. connection
     // 2. state

@@ -71,3 +71,13 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 
 - mysql connector 8.x recommended [mysql&java version](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-versions.html)
 
+
+## jdbc DriverManager 数据库驱动 driver 注册逻辑
+- jdbc4.0 自动加载 `System.getProperty("jdbc.drivers")` 中设置的冒号隔开的 driver
+- jdbc4.0 自动加载基于 ServiceLoader SPI 暴露的 Driver
+- Driver 主动调用 DriverManager#registerDriver 注册，通常Driver会在静态代码块中进行注册，所以 Class.forName({driverClassName}) 就能注册相应的 driver；
+
+mysql connector 早在[5.0.0(2005-12-22)](https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/news-5-0-0.html) 版本就添加了 META-INF/services/java.sql.Driver 文件支持 service-provicer SPI
+pg connector 也在[Version 42.2.13(2020-06-04)](https://jdbc.postgresql.org/documentation/changelog.html#version_42.2.19) 之后支持了
+
+ 所以不再需要在代码里显示设置 driverClassName 或者 jdbcUrl 的前缀去匹配对应的 driverClassName 然后 Class.forName 的形式去注册驱动 那么繁琐了， 只要对应的数据库驱动在classpath路径下，就会自动加载注册
