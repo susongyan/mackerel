@@ -5,7 +5,7 @@ package com.zuomagai.mackerel;
  * @author : holysu
  **/
 public enum EnumDriver {
-    MYSQL("jdbc:mysql://", "com.mysql.jdbc.Driver"), POSTGRELSQL("jdbc:postgresql://", "org.postgresql.Driver");
+    MYSQL("jdbc:mysql://", "com.mysql.jdbc.Driver"), POSTGRESQL("jdbc:postgresql://", "org.postgresql.Driver");
 
     private String prefix;
     private String driverName;

@@ -20,9 +20,9 @@ strong liveness guarantee, would not affect in using ones;
 所以，需要在数据库服务端wait_time之前，把常驻连接池的连接给renew一下，有个检查线程定期检测 
 
 实际上，具有一定规模的公司，微服务的机器数可能是几十甚至几百，就会对数据库的连接数的造成压力，而且mysql会把一些资源缓存在长连接上(sort_buffer_size  + read_buffer_size  + read_rnd_buffer_size  + join_buffer_size  + thread_stack  + binlog_cache_size)，长连接较多，太久没释放对内存也会有压力；
-dba会把 wait_time设置为 1~2小时，期望快些释放压力； 
+通常dba会把 wait_time设置为 1~2小时，期望快些释放压力； 
 
-### maxLifetime 还是 maxIdle？ 
+### maxLifetime 还是 maxIdleTime?  
 前提，都要小于数据库服务端的 wait_time 
 
 高并发的服务，一般几分钟甚至一分钟一次ygc，当db连接被清除的时候 肯定已经在老年代了
@@ -31,11 +31,11 @@ maxLifeTime
 - 如果是 maxLifetime 概念，即使连接最近还是活跃的，一过maxLifetime就变为gc垃圾，导致old区存在大量待回收的db连接；cms的话 final remark 阶段扫描的引用数量会很多，耗时就会增加，对于高并发的服务（stw比较敏感）影响就比较大
 - 不过 maxLifetime 能更有效的清理db连接资源，减轻数据库的压力
 
-maxIdle
+maxIdleTime
 - 常驻连接池的连接（min），只要是活跃的就不会被清理，也不会被数据库服务端断开，对业务服务来说，池子里一直有可用的连接，减少了连接建立的开销 
-- 连接可能维持很久，一直占着数据库服务端连接的资源 
+- 连接可能维持很久，一直占着数据库服务端连接的资源 
 
-个人倾向： maxIdle
+个人倾向： maxIdleTime
 - 低峰期，保证maxIdle < wati_time < 低峰时段，就能保证进入高峰期的时候，不会说都需要重新建立连接，影响请求rt 和 db瞬时连接压力
 
 ## testWhileIdle
@@ -72,12 +72,16 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 - mysql connector 8.x recommended [mysql&java version](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-versions.html)
 
 
-## jdbc DriverManager 数据库驱动 driver 注册逻辑
+## jdbc DriverManager 数据库驱动 driver 注册逻辑
 - jdbc4.0 自动加载 `System.getProperty("jdbc.drivers")` 中设置的冒号隔开的 driver
 - jdbc4.0 自动加载基于 ServiceLoader SPI 暴露的 Driver
 - Driver 主动调用 DriverManager#registerDriver 注册，通常Driver会在静态代码块中进行注册，所以 Class.forName({driverClassName}) 就能注册相应的 driver；
 
-mysql connector 早在[5.0.0(2005-12-22)](https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/news-5-0-0.html) 版本就添加了 META-INF/services/java.sql.Driver 文件支持 service-provicer SPI
-pg connector 也在[Version 42.2.13(2020-06-04)](https://jdbc.postgresql.org/documentation/changelog.html#version_42.2.19) 之后支持了
+- mysql connector 早在[5.0.0(2005-12-22)](https://dev.mysql.com/doc/relnotes/connector-j/5.1/en/news-5-0-0.html) 版本就添加了 META-INF/services/java.sql.Driver 文件支持 service-provicer SPI
+- pg connector 也在[Version 42.2.13(2020-06-04)](https://jdbc.postgresql.org/documentation/changelog.html#version_42.2.19) 之后支持了
 
  所以不再需要在代码里显示设置 driverClassName 或者 jdbcUrl 的前缀去匹配对应的 driverClassName 然后 Class.forName 的形式去注册驱动 那么繁琐了， 只要对应的数据库驱动在classpath路径下，就会自动加载注册
+
+
+## 默认连接池个数多少？
+在索引合理的情况下，并且在数据库引擎的缓存 buffer pool作用下，sql执行其实是毫秒级的，按 10ms算，一个连接1秒能执行 1000/10=100个sql，那么连接池内常驻 10 个连接，能应对 100 * 10 = 1000 qps的请求，足够非高并发服务的数据库请求使用了； 

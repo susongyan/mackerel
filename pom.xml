@@ -17,6 +17,7 @@
 
     <modules>
         <module>mackerel-core</module>
+        <module>mackerel-test</module>
     </modules>
     
     <dependencies>

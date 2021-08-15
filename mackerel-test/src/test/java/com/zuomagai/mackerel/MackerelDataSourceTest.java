@@ -33,7 +33,6 @@ public class MackerelDataSourceTest {
                 try {
                     connection.close();
                 } catch (SQLException e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }
@@ -41,7 +40,6 @@ public class MackerelDataSourceTest {
                 try {
                     dataSource.close();
                 } catch (Exception e) {
-                    // TODO Auto-generated catch block
                     e.printStackTrace();
                 }
             }

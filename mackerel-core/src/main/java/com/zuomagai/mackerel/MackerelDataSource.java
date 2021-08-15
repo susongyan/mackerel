@@ -16,7 +16,7 @@ import javax.sql.DataSource;
  **/
 public class MackerelDataSource implements DataSource, AutoCloseable{
 
-    private static final AtomicInteger id = new AtomicInteger();
+    private static final AtomicInteger id = new AtomicInteger(0);
     private String name;
     private MackerelConfig config;
 
@@ -99,6 +99,6 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
 
     @Override
     public void close() throws Exception {
-        //TODO:  
+        //TODO: close pool resources 
     }
 }
