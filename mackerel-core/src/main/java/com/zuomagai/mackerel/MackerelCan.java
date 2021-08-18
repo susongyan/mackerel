@@ -52,7 +52,7 @@ public class MackerelCan implements AutoCloseable {
         setMinIdleTime(config.getMinIdleTime());
     }
 
-    public Mackerel get() {
+    public Mackerel getMackerel() {
         long start = System.currentTimeMillis();
         try {
             if (this.maxWait <= 0) {
@@ -120,6 +120,17 @@ public class MackerelCan implements AutoCloseable {
         return config.getPassword();
     }
 
+    public int getMinIdle() {
+        return minIdle;
+    }
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+    public int getCurrentSize() {
+        return mackerels.size();
+    }
+
     public void add(Mackerel mackerel) {
         this.mackerels.add(mackerel);
         // 塞到头部，刚创建或归还的连接可用性比较靠谱
@@ -129,7 +140,6 @@ public class MackerelCan implements AutoCloseable {
     @Override
     public void close() throws Exception {
         // TODO 关闭连接，关闭任务
-
         feeder.close();
     }
 }

@@ -34,7 +34,7 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
 
     @Override
     public Connection getConnection() throws SQLException {
-        return mackerelCan.get().getConnection();
+        return mackerelCan.getMackerel().getConnection();
     }
  
     private void validateConfig(MackerelConfig config) { 

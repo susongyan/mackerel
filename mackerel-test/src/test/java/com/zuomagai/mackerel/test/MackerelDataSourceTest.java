@@ -3,6 +3,7 @@ package com.zuomagai.mackerel.test;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.concurrent.TimeUnit;
 
 import com.zuomagai.mackerel.MackerelConfig;
 import com.zuomagai.mackerel.MackerelDataSource;
@@ -18,11 +19,13 @@ public class MackerelDataSourceTest {
         config.setUserName("root");
         config.setPassword("root");
         
-
         Connection connection = null;
         MackerelDataSource dataSource = null;
         try {
             dataSource = new MackerelDataSource(config); 
+
+            TimeUnit.MILLISECONDS.sleep(1000);
+
             connection = dataSource.getConnection();
             ResultSet result = connection.createStatement().executeQuery("select * from t_user");
             while(result.next()) { 
@@ -30,6 +33,9 @@ public class MackerelDataSourceTest {
             }
          
         } catch (SQLException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         } finally {
             if (connection != null) {

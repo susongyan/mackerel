@@ -15,7 +15,7 @@ public class MackerelConfig {
     // pool config
     private int minIdle = 10;
     private int maxSize = 10;
-    private long maxWait = 500;
+    private long maxWait = 800;
     private boolean testWhileIdle;
     private long validateWindow = 5000;
     private long maxIdleTime = 30 * 60 * 1000; // default 30 minutes

@@ -19,15 +19,24 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import com.zuomagai.mackerel.Mackerel;
-
 /**
+ * proxy connection 
+ * (1) close => return to pool 
+ * (2) do some statics monitor
+ * 
  * @author holysu
  **/
-public class MackerelConnection implements Connection{
+public class MackerelConnection implements Connection {
 
     private Mackerel mackerel;
     private Connection real;
+
+    private boolean isReadOnly;
+    private boolean isAutoCommit;
+    private int networkTimeout;
+    private int transactionIsolation;
+    private String catalog;
+    private String schema;
 
     public MackerelConnection(Mackerel mackerel, Connection real) {
         this.mackerel = mackerel;
@@ -36,331 +45,282 @@ public class MackerelConnection implements Connection{
 
     @Override
     public void abort(Executor executor) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.abort(executor);
     }
 
     @Override
     public void clearWarnings() throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.clearWarnings();
     }
 
     @Override
     public void close() throws SQLException {
         // TODO Auto-generated method stub
-        
+        // cas status first
+        // reset some properties
+        // return to pool
     }
 
     @Override
     public void commit() throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.commit();
     }
 
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createArrayOf(typeName, elements);
     }
 
     @Override
     public Blob createBlob() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createBlob();
     }
 
     @Override
     public Clob createClob() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createClob();
     }
 
     @Override
     public NClob createNClob() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createNClob();
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createSQLXML();
     }
 
     @Override
     public Statement createStatement() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createStatement();
     }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createStatement(resultSetType, resultSetConcurrency);
     }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.createStruct(typeName, attributes);
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        return real.getAutoCommit();
     }
 
     @Override
     public String getCatalog() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getCatalog();
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getClientInfo();
     }
 
     @Override
     public String getClientInfo(String name) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getClientInfo(name);
     }
 
     @Override
     public int getHoldability() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        return real.getHoldability();
     }
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getMetaData();
     }
 
     @Override
     public int getNetworkTimeout() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        return real.getNetworkTimeout();
     }
 
     @Override
     public String getSchema() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getSchema();
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
-        // TODO Auto-generated method stub
-        return 0;
+        return real.getTransactionIsolation();
     }
 
     @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getTypeMap();
     }
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.getWarnings();
     }
 
     @Override
     public boolean isClosed() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        return real.isClosed();
     }
 
     @Override
     public boolean isReadOnly() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        return real.isReadOnly();
     }
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        return real.isValid(timeout);
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.nativeSQL(sql);
     }
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareCall(sql);
     }
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareCall(sql, resultSetType, resultSetConcurrency);
     }
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareCall(sql, resultSetType, resultSetConcurrency);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql, autoGeneratedKeys);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql, columnIndexes);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql, columnNames);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
             throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql, resultSetType, resultSetConcurrency);
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
             int resultSetHoldability) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.releaseSavepoint(savepoint);
     }
 
     @Override
     public void rollback() throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.rollback();
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.rollback(savepoint);
     }
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setAutoCommit(autoCommit);
     }
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setCatalog(catalog);
     }
 
     @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        // TODO Auto-generated method stub
-        
+        real.setClientInfo(properties);
     }
 
     @Override
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
-        // TODO Auto-generated method stub
-        
+        real.setClientInfo(name, value);
     }
 
     @Override
     public void setHoldability(int holdability) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setHoldability(holdability);
     }
 
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setNetworkTimeout(executor, milliseconds);
     }
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setReadOnly(readOnly);
     }
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.setSavepoint();
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        return real.setSavepoint(name);
     }
 
     @Override
     public void setSchema(String schema) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setSchema(schema);
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setTransactionIsolation(level);
     }
 
     @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        real.setTypeMap(map);
     }
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        return iface.isAssignableFrom(this.getClass());
     }
 
     @Override
     public <T> T unwrap(Class<T> iface) throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        if (iface.isInstance(this)) {
+            return iface.cast(this);
+        } else {
+            return this.real.unwrap(iface);
+        }
     }
-    
-    
 }

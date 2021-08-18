@@ -34,4 +34,13 @@ public class Mackerel {
             return 0;
         return System.currentTimeMillis() - returnTime;
     }
+    
+    public void reset() {
+        //TODO reset before return pool
+        // 1. schema
+        // 2. isolation level
+        // 3. catalog
+        // 4. auto commit
+        // ...
+    }
 }
