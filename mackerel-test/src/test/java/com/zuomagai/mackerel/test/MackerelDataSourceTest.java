@@ -1,8 +1,11 @@
-package com.zuomagai.mackerel;
+package com.zuomagai.mackerel.test;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import com.zuomagai.mackerel.MackerelConfig;
+import com.zuomagai.mackerel.MackerelDataSource;
 
 import org.junit.Test;
 

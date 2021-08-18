@@ -4,7 +4,7 @@ import java.sql.Connection;
 
 /**
  * connection
- * @author : holysu
+ * @author holysu
  **/
 public class Mackerel {
     // properties
@@ -22,6 +22,11 @@ public class Mackerel {
 
     public Mackerel(Connection connection) {
         this.connection = connection;
+    }
+
+    public Connection getConnection() {
+        // wrap it
+        return this.connection;
     }
 
     public long getIdleDuration () {

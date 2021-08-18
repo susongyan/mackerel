@@ -19,22 +19,30 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
     private static final AtomicInteger id = new AtomicInteger(0);
     private String name;
     private MackerelConfig config;
+    private MackerelCan mackerelCan;
+    private volatile boolean inited = false; 
 
     public MackerelDataSource(MackerelConfig config) {
         validateConfig(config);
         this.config = config;
         this.name = config.getName();
+        this.mackerelCan = new MackerelCan(config); 
+   
+        //TODO 是否需要lazy init？ 
+        this.mackerelCan.init();
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(config.getJdbcUrl(), config.getUserName(), config.getPassword());
+        return mackerelCan.get().getConnection();
     }
  
     private void validateConfig(MackerelConfig config) { 
          if (config.getName() == null) {
             config.setName("MackerelDataSource#" + id.getAndIncrement()); 
          }
+
+         //TODO 初始化的时候要不要检查 jdbcUrl、username、password的有效性？
     }
 
     /**
@@ -100,5 +108,7 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
     @Override
     public void close() throws Exception {
         //TODO: close pool resources 
+        mackerelCan.close();
+        
     }
 }

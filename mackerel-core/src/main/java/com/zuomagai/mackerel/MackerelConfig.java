@@ -13,16 +13,13 @@ public class MackerelConfig {
     private String password;
 
     // pool config
-    private int minIdle;
-    private int maxSize;
-    private long maxWait;
+    private int minIdle = 10;
+    private int maxSize = 10;
+    private long maxWait = 500;
     private boolean testWhileIdle;
     private long validateWindow = 5000;
     private long maxIdleTime = 30 * 60 * 1000; // default 30 minutes
     private long minIdleTime = 10 * 60 * 1000; // default 10 minutes
-
-    private long connectionTimeout = 10 * 1000;
-    private long validateTimeout = 5 * 1000;
 
     public String getName() {
         return name;
@@ -110,21 +107,5 @@ public class MackerelConfig {
 
     public void setMinIdleTime(long minIdleTime) {
         this.minIdleTime = minIdleTime;
-    }
-
-    public void setConnectionTimeout(long connectionTimeout) {
-        this.connectionTimeout = connectionTimeout;
-    }
-    
-    public long getConnectionTimeout() {
-        return connectionTimeout;
-    }
-
-    public void setValidateTimeout(long validateTimeout) {
-        this.validateTimeout = validateTimeout;
-    }
-
-    public long getValidateTimeout() {
-        return validateTimeout;
     }
 }
