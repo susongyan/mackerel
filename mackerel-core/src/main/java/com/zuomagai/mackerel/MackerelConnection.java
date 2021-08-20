@@ -20,29 +20,57 @@ import java.util.Properties;
 import java.util.concurrent.Executor;
 
 /**
- * proxy connection 
- * (1) close => return to pool 
- * (2) do some statics monitor
+ * proxy connection (1) close => return to pool (2) do some statics monitor
  * 
- * @author holysu
+ * @author S.S.Y
  **/
 public class MackerelConnection implements Connection {
 
     private Mackerel mackerel;
     private Connection real;
 
-    private boolean isReadOnly;
-    private boolean isAutoCommit;
+    private boolean readOnly = false;
+    private boolean autoCommit = true;
     private int networkTimeout;
     private int transactionIsolation;
     private String catalog;
     private String schema;
 
+    private Map<String, Class<?>> typeMap;
+
     public MackerelConnection(Mackerel mackerel, Connection real) {
         this.mackerel = mackerel;
         this.real = real;
+        setUp();
     }
 
+    @Override
+    public void close() throws SQLException {
+        // reset connection first
+        reset();
+        // cas status first & return pool
+        mackerel.returnIdle();
+    }
+
+    /**
+     * 设置初始属性，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为
+     */
+    public void setUp() {
+         
+    }
+
+    public void reset() {
+        // TODO reset before return pool
+        // autoCommit
+        // readOnly
+        // catalog
+        // schema
+        // isolation level
+        // networkTimeout
+        // ...
+    }
+
+    // region delegate
     @Override
     public void abort(Executor executor) throws SQLException {
         real.abort(executor);
@@ -51,14 +79,6 @@ public class MackerelConnection implements Connection {
     @Override
     public void clearWarnings() throws SQLException {
         real.clearWarnings();
-    }
-
-    @Override
-    public void close() throws SQLException {
-        // TODO Auto-generated method stub
-        // cas status first
-        // reset some properties
-        // return to pool
     }
 
     @Override
@@ -309,6 +329,7 @@ public class MackerelConnection implements Connection {
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
         real.setTypeMap(map);
     }
+    // endregion
 
     @Override
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
@@ -322,5 +343,5 @@ public class MackerelConnection implements Connection {
         } else {
             return this.real.unwrap(iface);
         }
-    }
+    }  
 }

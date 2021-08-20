@@ -1,18 +1,18 @@
 package com.zuomagai.mackerel;
 
 /**
- * @author : holysu
+ * @author : S.S.Y
  **/
 public class MackerelConfig {
 
     private String name; 
 
-    // jdbc config
+    // url config
     private String jdbcUrl;
     private String userName;
     private String password;
 
-    // pool config
+    // pool config, can change onlive
     private int minIdle = 10;
     private int maxSize = 10;
     private long maxWait = 800;
@@ -20,6 +20,14 @@ public class MackerelConfig {
     private long validateWindow = 5000;
     private long maxIdleTime = 30 * 60 * 1000; // default 30 minutes
     private long minIdleTime = 10 * 60 * 1000; // default 10 minutes
+
+    // optional
+    private String catalog;
+    private String schema;
+    private int isolation;
+    private int networkTimeout;
+    private boolean autoCommit = true;
+    private boolean readOnly = false; 
 
     public String getName() {
         return name;

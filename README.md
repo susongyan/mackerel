@@ -90,3 +90,20 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 - 取出连接时，如果空闲超过一定时间，也进行检查
 - 以上两个检测都需要连接空闲一定时间后才进行检查，但是故障总是无时无刻发生的，如果故障是在检查间隙中发生，比如：由于数据库服务端的原因导致连接关闭、或者网络问题导致底层tcp连接不可用，这时候也要能快速识别到，快速销毁不可用连接才行，这个时候就要在sql执行异常的时候基于特定的code判定连接是否不可用
 
+## connection代理类
+由于需要在连接关闭的时候，将其归还至连接池中，需要改写 Connection#close() 的行为，所以需要在底层厂商的连接实现基础上封装个代理类； 
+
+另外，db连接是具有一些属性设置api的，我们不排除应用在连接使用的时候修改属性状态，所以在连接归还的时候需要重置这些属性到初始状态，避免影响下一个连接使用者的正常使用； Connection 定义了以下属性set api：
+- void setAutoCommit(boolean autoCommit) throws SQLException; // 设置事务自否自动提交,发送命令到服务端(SET autocommit=1、0)
+- void setReadOnly(boolean readOnly) throws SQLException; // 设置只读连接, 发送命令到服务端
+- void setCatalog(String catalog) throws SQLException; // 切换catalog（对于mysql是database), 发送命令到服务端
+- void setTransactionIsolation(int level) throws SQLException; // 切换事务隔离级别, 发送命令到服务端
+- void setSchema(String schema) throws SQLException; // 切换schema (对于mysql无效), 发送命令到服务端
+- void setTypeMap(java.util.Map<String,Class<?>> map) throws SQLException; // 设置自定义类型映射
+
+- void setHoldability(int holdability) throws SQLException; // 设置resultSet是否在事务提交后还持有游标， mysql的实现是空; 
+- void setClientInfo(String name, String value) / void setClientInfo(Properties properties) // 设置客户端信息（ApplicationName、ClientUser、ClientHostname), 不会对服务端sql执行有影响，只在客户端测用来做诊断、调试
+- void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException; // 设置连接级别的网络超时时长，超过这个时间则认为连接已关闭; pg不支持
+
+对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、trasactionIsolation、networkTimeout 
+

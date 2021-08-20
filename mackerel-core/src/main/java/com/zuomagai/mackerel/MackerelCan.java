@@ -8,10 +8,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * 马鲛鱼罐头 (connection pool)
  * 
- * @author : holysu
+ * @author S.S.Y
  **/
 public class MackerelCan implements AutoCloseable {
-
+ 
     private CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
 
     // FILO后进先出，刚用完归还的连接相对于空闲较久的连接更鲜活
@@ -134,6 +134,10 @@ public class MackerelCan implements AutoCloseable {
     public void add(Mackerel mackerel) {
         this.mackerels.add(mackerel);
         // 塞到头部，刚创建或归还的连接可用性比较靠谱
+        this.idleMackerels.addFirst(mackerel);
+    }
+
+    public void returnIdle(Mackerel mackerel) {
         this.idleMackerels.addFirst(mackerel);
     }
 

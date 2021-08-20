@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 
 /**
  *
- * @author : holysu
+ * @author S.S.Y
  **/
 public class MackerelDataSource implements DataSource, AutoCloseable{
 
@@ -34,6 +34,11 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
 
     @Override
     public Connection getConnection() throws SQLException {
+        return mackerelCan.getMackerel().getConnection();
+    }
+
+    @Override
+    public Connection getConnection(String username, String password) throws SQLException {
         return mackerelCan.getMackerel().getConnection();
     }
  
@@ -59,11 +64,6 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
         } catch (ClassNotFoundException e) {
             throw new IllegalArgumentException("driver(" + driverName + ") not exists");
         }
-    }
-
-    @Override
-    public Connection getConnection(String username, String password) throws SQLException {
-        throw new SQLFeatureNotSupportedException();
     }
 
     @Override

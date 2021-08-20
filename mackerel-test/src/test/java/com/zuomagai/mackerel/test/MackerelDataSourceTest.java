@@ -11,31 +11,30 @@ import com.zuomagai.mackerel.MackerelDataSource;
 import org.junit.Test;
 
 public class MackerelDataSourceTest {
-   
+
     @Test
     public void basic() {
         MackerelConfig config = new MackerelConfig();
         config.setJdbcUrl("jdbc:mysql://127.0.0.1:3307/test?socketTimeout=5000&connectTimeout=5000");
         config.setUserName("root");
         config.setPassword("root");
-        
+
         Connection connection = null;
         MackerelDataSource dataSource = null;
         try {
-            dataSource = new MackerelDataSource(config); 
+            dataSource = new MackerelDataSource(config);
 
-            TimeUnit.MILLISECONDS.sleep(1000);
+            TimeUnit.MILLISECONDS.sleep(1000); // wait connection create
 
             connection = dataSource.getConnection();
             ResultSet result = connection.createStatement().executeQuery("select * from t_user");
-            while(result.next()) { 
+
+            System.out.println();
+            while (result.next()) {
                 System.out.println("id=" + result.getLong(1) + ", name=" + result.getString(2) + ", age=" + result.getInt(3));
             }
-         
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
+
+        } catch (Exception e) {
             e.printStackTrace();
         } finally {
             if (connection != null) {
