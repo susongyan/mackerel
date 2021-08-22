@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * @author S.S.Y
  **/
 public class MackerelCan implements AutoCloseable {
- 
+
     private CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
 
     // FILO后进先出，刚用完归还的连接相对于空闲较久的连接更鲜活
@@ -19,8 +19,13 @@ public class MackerelCan implements AutoCloseable {
 
     private Feeder feeder;
 
-    private MackerelConfig config;
-    // region properties, allow changed on running
+    private final String jdbcUrl;
+    private final String userName;
+    private final String password;
+    private final String catalog;
+    private final String schema;
+
+    // region pool properties, allow changed on running
     private volatile int minIdle;
     private volatile int maxSize;
     private volatile long maxWait;
@@ -29,14 +34,16 @@ public class MackerelCan implements AutoCloseable {
     private volatile long minIdleTime;
     // endregion
 
-    private long validateTimeout;
-
     public MackerelCan(MackerelConfig config) {
-        this.config = config;
+        this.jdbcUrl = config.getJdbcUrl();
+        this.userName = config.getUserName();
+        this.password = config.getPassword();
+        this.catalog = config.getCatalog();
+        this.schema = config.getSchema();
+        validateAndInitConfig(config);
     }
 
     public void init() {
-        validateAndInitConfig(this.config);
         // feeder
         feeder = new Feeder(this);
         feeder.init();
@@ -59,9 +66,10 @@ public class MackerelCan implements AutoCloseable {
                 return idleMackerels.takeFirst();
             }
             Mackerel mackerel = idleMackerels.pollFirst(this.maxWait, TimeUnit.MILLISECONDS);
-            if (mackerel == null)     
-                throw new MackerelException("cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
-            else 
+            if (mackerel == null)
+                throw new MackerelException(
+                        "cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
+            else
                 return mackerel;
         } catch (InterruptedException e) {
             throw new MackerelException("fetching connection interrupted", e);
@@ -104,27 +112,32 @@ public class MackerelCan implements AutoCloseable {
         this.minIdleTime = minIdleTime;
     }
 
-    public void setValidateTimeout(long validateTimeout) {
-        this.validateTimeout = validateTimeout;
-    }
-
     public String getJdbcUrl() {
-        return config.getJdbcUrl();
+        return this.jdbcUrl;
     }
 
     public String getUserName() {
-        return config.getUserName();
+        return this.userName;
     }
 
     public String getPassword() {
-        return config.getPassword();
+        return this.password;
     }
 
     public int getMinIdle() {
         return minIdle;
     }
+
     public int getMaxSize() {
         return maxSize;
+    }
+
+    public String getCatalog() {
+        return catalog;
+    }
+
+    public String getSchema() {
+        return schema;
     }
 
     public int getCurrentSize() {
@@ -134,16 +147,25 @@ public class MackerelCan implements AutoCloseable {
     public void add(Mackerel mackerel) {
         this.mackerels.add(mackerel);
         // 塞到头部，刚创建或归还的连接可用性比较靠谱
-        this.idleMackerels.addFirst(mackerel);
+        this.idleMackerels.addFirst(mackerel); 
     }
 
     public void returnIdle(Mackerel mackerel) {
         this.idleMackerels.addFirst(mackerel);
+        System.out.println(">>> after return: " + toString());
     }
 
     @Override
     public void close() throws Exception {
-        // TODO 关闭连接，关闭任务
+        // TODO 关闭任务
         feeder.close();
+
+        //TODO 关闭所有db连接
+    }
+
+    @Override
+    public String toString() {
+        return "total=" + this.mackerels.size() 
+            + ", idle=" + this.idleMackerels.size();
     }
 }

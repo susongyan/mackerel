@@ -9,11 +9,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author S.S.Y
  **/
 public class Mackerel {
+
     // properties
     // 1. connection
     // 2. state
     // 3. lifetime controller
-
     private static final int STATUS_IDLE = 0;
     private static final int STATUS_ACTIVE = 1;
     private static final int STATUS_EVICTED = 2;
@@ -25,18 +25,26 @@ public class Mackerel {
 
     public Mackerel(MackerelCan mackerelCan, Connection connection) {
         this.mackerelCan = mackerelCan;
-        this.connection = connection;
+        this.connection = new MackerelConnection(this, connection);
+        this.markActive();
     }
 
     public Connection getConnection() {
-        //TODO wrap/proxy it
         return this.connection;
+    }
+
+    public MackerelCan getMackerelCan() {
+        return this.mackerelCan;
     }
 
     public long getIdleDuration() {
         if (returnTime == 0)
             return 0;
         return System.currentTimeMillis() - returnTime;
+    }
+
+    public boolean markActive() {
+        return status.compareAndSet(STATUS_IDLE, STATUS_ACTIVE);
     }
 
     public boolean returnIdle() {

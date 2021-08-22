@@ -10,14 +10,18 @@ import java.sql.NClob;
 import java.sql.PreparedStatement;
 import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.SQLWarning;
 import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Struct;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+
+import com.zuomagai.mackerel.util.StringUtils;
 
 /**
  * proxy connection (1) close => return to pool (2) do some statics monitor
@@ -26,22 +30,78 @@ import java.util.concurrent.Executor;
  **/
 public class MackerelConnection implements Connection {
 
+    private static final boolean DEFAULT_AUTO_COMMIT = true;
+    private static final boolean DEFAULT_READ_ONLY = false;
+    private static final int ISOLATION_NOT_SET = -1;
+
     private Mackerel mackerel;
     private Connection real;
 
-    private boolean readOnly = false;
-    private boolean autoCommit = true;
-    private int networkTimeout;
-    private int transactionIsolation;
+    private boolean autoCommit = DEFAULT_AUTO_COMMIT;
+    private boolean readOnly = DEFAULT_READ_ONLY;
+    private int networkTimeout; // 连接超时，暂时不支持；建议在 jdbcUrl设置socketTimeout
+    private int transactionIsolation = ISOLATION_NOT_SET;
     private String catalog;
     private String schema;
 
-    private Map<String, Class<?>> typeMap;
+    private static Boolean supportNetworkTimeout = null;
+
+    private String initialCatalog;
+    private String initialSchema;
+    private int initialNetworkTimeout;
+    private int initialTransactionIsolation = ISOLATION_NOT_SET;
 
     public MackerelConnection(Mackerel mackerel, Connection real) {
         this.mackerel = mackerel;
         this.real = real;
-        setUp();
+        this.initialCatalog = mackerel.getMackerelCan().getCatalog();
+        this.initialSchema = mackerel.getMackerelCan().getSchema();
+
+        setup();
+    }
+
+    /**
+     * 获取连接的初始属性值，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为 注意: 不同数据库的 jdbc
+     * api支持程度和实现逻辑不一定一致，有的是空方法有的是直接抛出异常；比如 pg不支持 networkTimeout 设置，会抛出异常
+     * 
+     * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开 //TODO
+     * setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
+     * 
+     */
+    public void setup() {
+
+        // mysql的 setNetworkTimeout有点bug(https://bugs.mysql.com/bug.php?id=75615) /
+        // pg不支持 networkTimeout =》 先不支持
+
+        // if (supportNetworkTimeout == null || supportNetworkTimeout) {
+        // try {
+        // this.initialNetworkTimeout = this.real.getNetworkTimeout();
+        // } catch (SQLException e) {
+        // // ignore, //TODO trace not support networktimeout
+        // // "get/set networkTimeout not supported by driver"
+        // supportNetworkTimeout = false;
+        // }
+        // this.networkTimeout = this.initialNetworkTimeout;
+        // }
+
+        try {
+            if (StringUtils.isNotEmpty(this.initialCatalog)) {
+                this.real.setCatalog(this.initialCatalog);
+            }
+            if (StringUtils.isNotEmpty(this.initialSchema)) {
+                this.real.setSchema(this.initialSchema);
+            }
+
+            this.initialCatalog = this.real.getCatalog();
+            this.initialSchema = this.real.getSchema();
+            this.initialTransactionIsolation = this.real.getTransactionIsolation();
+            this.catalog = this.initialCatalog;
+            this.schema = this.initialSchema;
+            this.transactionIsolation = initialTransactionIsolation;    
+        } catch (SQLException e) {
+            // TODO 抛出异常，中断连接
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -52,22 +112,34 @@ public class MackerelConnection implements Connection {
         mackerel.returnIdle();
     }
 
-    /**
-     * 设置初始属性，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为
-     */
-    public void setUp() {
-         
-    }
-
     public void reset() {
         // TODO reset before return pool
-        // autoCommit
-        // readOnly
-        // catalog
-        // schema
-        // isolation level
-        // networkTimeout
-        // ...
+        try {
+            if (this.autoCommit != DEFAULT_AUTO_COMMIT) {
+                this.real.setAutoCommit(DEFAULT_AUTO_COMMIT);
+            }
+
+            if (this.readOnly != DEFAULT_READ_ONLY) {
+                this.real.setReadOnly(DEFAULT_READ_ONLY);
+            }
+
+            if (!Objects.equals(this.catalog, this.initialCatalog)) {
+                this.real.setCatalog(this.initialCatalog);
+            }
+
+            if (!Objects.equals(this.schema, this.initialSchema)) {
+                this.real.setSchema(this.initialSchema);
+            }
+
+            if (this.transactionIsolation != this.initialTransactionIsolation) {
+                this.real.setTransactionIsolation(this.initialNetworkTimeout);
+            }
+
+            this.real.clearWarnings();
+        } catch (SQLException e) {
+            // TODO 判断连接关闭的异常
+            e.printStackTrace();
+        }
     }
 
     // region delegate
@@ -164,7 +236,7 @@ public class MackerelConnection implements Connection {
 
     @Override
     public int getNetworkTimeout() throws SQLException {
-        return real.getNetworkTimeout();
+        throw new SQLFeatureNotSupportedException("getNetTimeoutExecutor()");
     }
 
     @Override
@@ -297,7 +369,7 @@ public class MackerelConnection implements Connection {
 
     @Override
     public void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException {
-        real.setNetworkTimeout(executor, milliseconds);
+        throw new SQLFeatureNotSupportedException("setNetworkTimeout(Executor executor, int milliseconds)");
     }
 
     @Override
@@ -343,5 +415,5 @@ public class MackerelConnection implements Connection {
         } else {
             return this.real.unwrap(iface);
         }
-    }  
+    }
 }

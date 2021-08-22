@@ -105,5 +105,5 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 - void setClientInfo(String name, String value) / void setClientInfo(Properties properties) // 设置客户端信息（ApplicationName、ClientUser、ClientHostname), 不会对服务端sql执行有影响，只在客户端测用来做诊断、调试
 - void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException; // 设置连接级别的网络超时时长，超过这个时间则认为连接已关闭; pg不支持
 
-对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、trasactionIsolation、networkTimeout 
+对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、trasactionIsolation、networkTimeout、 typeMap
 

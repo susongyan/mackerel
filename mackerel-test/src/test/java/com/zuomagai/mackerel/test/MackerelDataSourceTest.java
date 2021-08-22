@@ -18,17 +18,16 @@ public class MackerelDataSourceTest {
         config.setJdbcUrl("jdbc:mysql://127.0.0.1:3307/test?socketTimeout=5000&connectTimeout=5000");
         config.setUserName("root");
         config.setPassword("root");
+        config.setMaxWait(0);
 
         Connection connection = null;
         MackerelDataSource dataSource = null;
         try {
             dataSource = new MackerelDataSource(config);
-
-            TimeUnit.MILLISECONDS.sleep(1000); // wait connection create
-
             connection = dataSource.getConnection();
             ResultSet result = connection.createStatement().executeQuery("select * from t_user");
 
+            TimeUnit.MILLISECONDS.sleep(1000); // wait connection create
             System.out.println();
             while (result.next()) {
                 System.out.println("id=" + result.getLong(1) + ", name=" + result.getString(2) + ", age=" + result.getInt(3));

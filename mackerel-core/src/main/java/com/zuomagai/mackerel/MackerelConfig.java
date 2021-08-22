@@ -24,10 +24,6 @@ public class MackerelConfig {
     // optional
     private String catalog;
     private String schema;
-    private int isolation;
-    private int networkTimeout;
-    private boolean autoCommit = true;
-    private boolean readOnly = false; 
 
     public String getName() {
         return name;
@@ -115,5 +111,21 @@ public class MackerelConfig {
 
     public void setMinIdleTime(long minIdleTime) {
         this.minIdleTime = minIdleTime;
+    }
+
+    public void setCatalog(String catalog) {
+        this.catalog = catalog;
+    }
+
+    public String getCatalog() {
+        return catalog;
+    }
+
+    public void setSchema(String schema) {
+        this.schema = schema;
+    }
+
+    public String getSchema() {
+        return schema;
     }
 }
