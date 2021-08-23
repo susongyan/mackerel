@@ -29,7 +29,8 @@ public class MackerelCan implements AutoCloseable {
     private volatile int minIdle;
     private volatile int maxSize;
     private volatile long maxWait;
-    private volatile long validateWindow; // TODO 取出来的连接，空闲超过多久就要校验有效性，叫这个名字好像不大好？
+    private volatile boolean testWhileIdle;
+    private volatile long validateWindow; //检测窗口，间隔多久进行一次检测
     private volatile long maxIdleTime;
     private volatile long minIdleTime;
     // endregion
@@ -54,6 +55,7 @@ public class MackerelCan implements AutoCloseable {
         setMinIdle(config.getMinIdle());
         setMaxSize(config.getMaxSize());
         setMaxWait(config.getMaxWait());
+        setTestWhileIdle(config.isTestWhileIdle()); 
         setValidateWindow(config.getValidateWindow());
         setMaxIdleTime(config.getMaxIdleTime());
         setMinIdleTime(config.getMinIdleTime());
@@ -65,7 +67,9 @@ public class MackerelCan implements AutoCloseable {
             if (this.maxWait <= 0) {
                 return idleMackerels.takeFirst();
             }
-            Mackerel mackerel = idleMackerels.pollFirst(this.maxWait, TimeUnit.MILLISECONDS);
+            
+            long wait = this.maxWait;
+            Mackerel mackerel = idleMackerels.pollFirst(wait, TimeUnit.MILLISECONDS);
             if (mackerel == null)
                 throw new MackerelException(
                         "cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
@@ -92,6 +96,10 @@ public class MackerelCan implements AutoCloseable {
         if (maxWait < 0)
             throw new IllegalArgumentException("maxWait cannot less than 0");
         this.maxWait = maxWait;
+    }
+
+    public void setTestWhileIdle(boolean testWhileIdle) {
+        this.testWhileIdle = testWhileIdle;
     }
 
     public void setValidateWindow(long validateWindow) {
@@ -152,7 +160,7 @@ public class MackerelCan implements AutoCloseable {
 
     public void returnIdle(Mackerel mackerel) {
         this.idleMackerels.addFirst(mackerel);
-        System.out.println(">>> after return: " + toString());
+        System.out.println("--> after return: " + toString());
     }
 
     @Override

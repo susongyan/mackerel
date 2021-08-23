@@ -16,8 +16,8 @@ public class MackerelConfig {
     private int minIdle = 10;
     private int maxSize = 10;
     private long maxWait = 800;
-    private boolean testWhileIdle;
-    private long validateWindow = 5000;
+    private boolean testWhileIdle = true; //连接取出时，如果空闲超过一定时间则要检验有效性
+    private long validateWindow = 1 * 60 * 1000;
     private long maxIdleTime = 30 * 60 * 1000; // default 30 minutes
     private long minIdleTime = 10 * 60 * 1000; // default 10 minutes
 
@@ -83,10 +83,6 @@ public class MackerelConfig {
 
     public boolean isTestWhileIdle() {
         return testWhileIdle;
-    }
-
-    public void setTestWhileIdle(boolean testWhileIdle) {
-        this.testWhileIdle = testWhileIdle;
     }
 
     public long getValidateWindow() {

@@ -23,12 +23,16 @@ import java.util.concurrent.Executor;
 
 import com.zuomagai.mackerel.util.StringUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * proxy connection (1) close => return to pool (2) do some statics monitor
  * 
  * @author S.S.Y
  **/
 public class MackerelConnection implements Connection {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MackerelConnection.class);
 
     private static final boolean DEFAULT_AUTO_COMMIT = true;
     private static final boolean DEFAULT_READ_ONLY = false;
@@ -63,6 +67,7 @@ public class MackerelConnection implements Connection {
     /**
      * 获取连接的初始属性值，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为 注意: 不同数据库的 jdbc
      * api支持程度和实现逻辑不一定一致，有的是空方法有的是直接抛出异常；比如 pg不支持 networkTimeout 设置，会抛出异常
+     * 所以还是需要根据自己要支持的数据库驱动，根据他们的实现的差异来处理异常（忽略还是阻断执行）
      * 
      * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开 //TODO
      * setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
@@ -70,14 +75,14 @@ public class MackerelConnection implements Connection {
      */
     public void setup() {
 
-        // mysql的 setNetworkTimeout有点bug(https://bugs.mysql.com/bug.php?id=75615) /
-        // pg不支持 networkTimeout =》 先不支持
+        // pg不支持 networkTimeut
+        // setNetworkTimeout(executor, timeout); 重置的时候 我也不知道怎么设置这个executor => 先不支持
 
         // if (supportNetworkTimeout == null || supportNetworkTimeout) {
         // try {
         // this.initialNetworkTimeout = this.real.getNetworkTimeout();
         // } catch (SQLException e) {
-        // // ignore, //TODO trace not support networktimeout
+        // // ignore
         // // "get/set networkTimeout not supported by driver"
         // supportNetworkTimeout = false;
         // }
@@ -97,10 +102,10 @@ public class MackerelConnection implements Connection {
             this.initialTransactionIsolation = this.real.getTransactionIsolation();
             this.catalog = this.initialCatalog;
             this.schema = this.initialSchema;
-            this.transactionIsolation = initialTransactionIsolation;    
+            this.transactionIsolation = initialTransactionIsolation;
         } catch (SQLException e) {
-            // TODO 抛出异常，中断连接
-            e.printStackTrace();
+            LOGGER.error("setup connection properties fail", e);
+            throw new MackerelException("set up connection properties fail", e);
         }
     }
 
@@ -112,34 +117,28 @@ public class MackerelConnection implements Connection {
         mackerel.returnIdle();
     }
 
-    public void reset() {
-        // TODO reset before return pool
-        try {
-            if (this.autoCommit != DEFAULT_AUTO_COMMIT) {
-                this.real.setAutoCommit(DEFAULT_AUTO_COMMIT);
-            }
-
-            if (this.readOnly != DEFAULT_READ_ONLY) {
-                this.real.setReadOnly(DEFAULT_READ_ONLY);
-            }
-
-            if (!Objects.equals(this.catalog, this.initialCatalog)) {
-                this.real.setCatalog(this.initialCatalog);
-            }
-
-            if (!Objects.equals(this.schema, this.initialSchema)) {
-                this.real.setSchema(this.initialSchema);
-            }
-
-            if (this.transactionIsolation != this.initialTransactionIsolation) {
-                this.real.setTransactionIsolation(this.initialNetworkTimeout);
-            }
-
-            this.real.clearWarnings();
-        } catch (SQLException e) {
-            // TODO 判断连接关闭的异常
-            e.printStackTrace();
+    public void reset() throws SQLException {
+        if (this.autoCommit != DEFAULT_AUTO_COMMIT) {
+            this.real.setAutoCommit(DEFAULT_AUTO_COMMIT);
         }
+
+        if (this.readOnly != DEFAULT_READ_ONLY) {
+            this.real.setReadOnly(DEFAULT_READ_ONLY);
+        }
+
+        if (!Objects.equals(this.catalog, this.initialCatalog)) {
+            this.real.setCatalog(this.initialCatalog);
+        }
+
+        if (!Objects.equals(this.schema, this.initialSchema)) {
+            this.real.setSchema(this.initialSchema);
+        }
+
+        if (this.transactionIsolation != this.initialTransactionIsolation) {
+            this.real.setTransactionIsolation(this.initialTransactionIsolation);
+        }
+
+        this.real.clearWarnings();
     }
 
     // region delegate
@@ -345,11 +344,13 @@ public class MackerelConnection implements Connection {
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
         real.setAutoCommit(autoCommit);
+        this.autoCommit = autoCommit;
     }
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
         real.setCatalog(catalog);
+        this.catalog = catalog;
     }
 
     @Override
@@ -375,7 +376,8 @@ public class MackerelConnection implements Connection {
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
         real.setReadOnly(readOnly);
-    }
+        this.readOnly = readOnly;
+    } 
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
@@ -390,11 +392,13 @@ public class MackerelConnection implements Connection {
     @Override
     public void setSchema(String schema) throws SQLException {
         real.setSchema(schema);
+        this.schema = schema;
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
         real.setTransactionIsolation(level);
+        this.transactionIsolation = level;
     }
 
     @Override

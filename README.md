@@ -2,6 +2,7 @@
 based on jdbc api-4.0 
 - Macherel represent for a resource/connection
 - MacherelCan (a macherel container) contains serveral macherel ready to use
+- 适配 mysql、postgresql 
 
 ## MackerelConfig
 ## maxWait
@@ -37,24 +38,6 @@ maxIdleTime
 
 个人倾向： maxIdleTime
 - 低峰期，保证maxIdle < wati_time < 低峰时段，就能保证进入高峰期的时候，不会说都需要重新建立连接，影响请求rt 和 db瞬时连接压力
-
-## testWhileIdle
-default true, if macherel taken is idle more than `validateWindow`，`select 1` will be used to check if the macherel is alive yet;
-not worry about performance，the process like ping takes little expend； 
-
-testWhileIdle=true时，取出的连接如果空闲多久`validateWindow` 就要检测活性？
-- hikariCP 默认是500毫秒
-- druid的 minEvictableIdle 默认30分钟，最小3秒; 它同时也是清除 min~max 这部分线程的依据
-
-使用线程池，理想的情况下是恰好能满足qps的需求，大部分线程都处在活跃状态，所以呆在池内的空闲线程应该不会很多 
-
-## 如何检测连接是否存活？
-jdbc4.x 规范定义了 Connection#isValid(int timeout)，具体实现交给各数据库厂商提供的驱动(低版本的驱动可能不支持)，通常是发送一个检测sql或者其他机制
-如 
-- mysql connector里边有会话机制，发送ping来检查连接活性 
-- pgsql 则是发送一个空语句(preparedStatement)
-
-所以，用这个作为检测连接活性，能发挥数据库厂商驱动的优化 
 
 ## 连接异常断开如何快速发现？
 - 在数据库升级的时候，短时间内连接可能会全部不可用
@@ -105,5 +88,43 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 - void setClientInfo(String name, String value) / void setClientInfo(Properties properties) // 设置客户端信息（ApplicationName、ClientUser、ClientHostname), 不会对服务端sql执行有影响，只在客户端测用来做诊断、调试
 - void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException; // 设置连接级别的网络超时时长，超过这个时间则认为连接已关闭; pg不支持
 
-对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、trasactionIsolation、networkTimeout、 typeMap
+对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、transactionIsolation、networkTimeout, 在获取db连接的这些属性的初始值以及修改的时候，要根据数据库厂商的驱动实现来处理异常； 比如 pg 对networkTimeout的操作是直接抛出异常的，得忽略掉；而在修改 catalog、schema、transactionIsolation的时候，可能由于参数在服务端不合法 这个时候抛出的异常就得处理了
 
+## 何时检测连接活性
+由于网络问题、数据库服务端问题、服务端连接超时等 可能在任何时间发生，所以db物理连接随时都可能变为不可用；
+所以需要在讲连接交给用户之前，能进行检测
+
+1. 定时检测？ 
+间隔一定时间，检查躺在连接池中空闲的连接，如果不可用则剔除
+
+- druid 和 hikariCP 的定时检查只是为了维护连接数量的稳定；
+- apache GenericObjectPool 则是在evict任务里边做的有效性检查
+
+
+2. testWhileIdle？ 
+取出的连接，如果空闲超过一定时间就要检验活性；
+
+testWhileIdle=true时，取出的连接如果空闲多久`validateWindow` 就要检测活性？
+- hikariCP 默认是500毫秒
+- druid的 timeBetweenEvictionRunsMillis 默认1分钟
+
+3. 执行sql的时候异常
+sql执行抛出异常，可能是因为sql语法有问题、结果集太大导致io timeout了、也可能是连接不可用了； 得根据具体的错误码，确定是连接不可用的异常，则要直接销毁连接，其他异常需要用户自行处理
+
+被动发现，对sql执行有影响
+
+4. 选择
+已经有定时检测了， testWhileIdle 取出检测的时长判断就要小于定时间隔才有意义； 但是定时检查是一分钟一次，testWhileIdle 检测是不是有点频繁？ 而且两个检测动作会不会导致竞争？
+
+- 定时检测： 更为主动，如果连接有问题能更快的剔除并建立新的连接；但是是否过于频繁了？
+- testWhileIdle: 如果网络有问题，全部连接断开，会形成 取出 -> 验活失败 -> 等待新建连接 的现象； 检查次数比定时少很多
+
+个人倾向于 GenericObjectPool 的实现，在定时驱逐任务里边，如果 testWhileIle = true，则再维护连接数稳定的同时检测连接活性
+
+## 如何检测连接是否存活？
+jdbc4.x 规范定义了 Connection#isValid(int timeout)，具体实现交给各数据库厂商提供的驱动(低版本的驱动可能不支持)，通常是发送一个检测sql或者其他机制
+如 
+- mysql connector里边有会话机制，发送ping来检查连接活性 
+- pgsql 则是发送一个空语句(preparedStatement)
+
+所以，用这个作为检测连接活性，能发挥数据库厂商驱动自身的优化 
