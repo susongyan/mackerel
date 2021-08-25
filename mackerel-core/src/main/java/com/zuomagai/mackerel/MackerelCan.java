@@ -5,12 +5,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * 马鲛鱼罐头 (connection pool)
  * 
  * @author S.S.Y
  **/
 public class MackerelCan implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MackerelCan.class);
 
     private CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
 
@@ -30,7 +34,10 @@ public class MackerelCan implements AutoCloseable {
     private volatile int maxSize;
     private volatile long maxWait;
     private volatile boolean testWhileIdle;
-    private volatile long validateWindow; //检测窗口，间隔多久进行一次检测
+    private volatile long validateWindow; // 检测窗口，间隔多久进行一次检测
+    private volatile int validateTimeout; // 检测活性超时时间
+    private volatile long validateIdleTime; // testWhileIdle=true 时，如果连接空闲超过validateIdle则需要检测活性
+
     private volatile long maxIdleTime;
     private volatile long minIdleTime;
     // endregion
@@ -55,8 +62,10 @@ public class MackerelCan implements AutoCloseable {
         setMinIdle(config.getMinIdle());
         setMaxSize(config.getMaxSize());
         setMaxWait(config.getMaxWait());
-        setTestWhileIdle(config.isTestWhileIdle()); 
+        setTestWhileIdle(config.isTestWhileIdle());
         setValidateWindow(config.getValidateWindow());
+        setValidateTimeout(config.getValidateTimeout());
+        setValidateIdleTime(config.getValidateIdleTime()); 
         setMaxIdleTime(config.getMaxIdleTime());
         setMinIdleTime(config.getMinIdleTime());
     }
@@ -67,7 +76,7 @@ public class MackerelCan implements AutoCloseable {
             if (this.maxWait <= 0) {
                 return idleMackerels.takeFirst();
             }
-            
+
             long wait = this.maxWait;
             Mackerel mackerel = idleMackerels.pollFirst(wait, TimeUnit.MILLISECONDS);
             if (mackerel == null)
@@ -103,9 +112,17 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public void setValidateWindow(long validateWindow) {
-        if (validateWindow < 1000)
-            throw new IllegalArgumentException("validateWindow cannot less than 5000");
+        if (validateWindow < (60 * 1000))
+            throw new IllegalArgumentException("validateWindow cannot less than 1 minute");
         this.validateWindow = validateWindow;
+    }
+
+    public void setValidateIdleTime(long validateIdleTime) {
+        this.validateIdleTime = validateIdleTime;
+    }
+
+    public void setValidateTimeout(int validateTimeout) {
+        this.validateTimeout = validateTimeout;
     }
 
     public void setMaxIdleTime(long maxIdleTime) {
@@ -140,6 +157,22 @@ public class MackerelCan implements AutoCloseable {
         return maxSize;
     }
 
+    public long getMaxWait() {
+        return maxWait;
+    }
+
+    public boolean isTestWhileIdle() {
+        return testWhileIdle;
+    }
+
+    public long getValidateWindow() {
+        return validateWindow;
+    }
+
+    public long getValidateIdleTime() {
+        return validateIdleTime;
+    }
+
     public String getCatalog() {
         return catalog;
     }
@@ -148,19 +181,35 @@ public class MackerelCan implements AutoCloseable {
         return schema;
     }
 
+    public int getValidateTimeout() {
+        return validateTimeout;
+    }
+
+    public long getMinIdleTime() {
+        return minIdleTime;
+    }
+
+    public long getMaxIdleTime() {
+        return maxIdleTime;
+    }
+
     public int getCurrentSize() {
         return mackerels.size();
+    }
+
+    public CopyOnWriteArrayList<Mackerel> getAllMackerels() {
+        return mackerels;
     }
 
     public void add(Mackerel mackerel) {
         this.mackerels.add(mackerel);
         // 塞到头部，刚创建或归还的连接可用性比较靠谱
-        this.idleMackerels.addFirst(mackerel); 
+        this.idleMackerels.addFirst(mackerel);
     }
 
     public void returnIdle(Mackerel mackerel) {
         this.idleMackerels.addFirst(mackerel);
-        System.out.println("--> after return: " + toString());
+        LOGGER.debug("--> after return: " + toString());
     }
 
     @Override
@@ -168,12 +217,11 @@ public class MackerelCan implements AutoCloseable {
         // TODO 关闭任务
         feeder.close();
 
-        //TODO 关闭所有db连接
+        // TODO 关闭所有db连接
     }
 
     @Override
     public String toString() {
-        return "total=" + this.mackerels.size() 
-            + ", idle=" + this.idleMackerels.size();
+        return "total=" + this.mackerels.size() + ", idle=" + this.idleMackerels.size();
     }
 }

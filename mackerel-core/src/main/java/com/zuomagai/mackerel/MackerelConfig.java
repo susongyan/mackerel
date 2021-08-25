@@ -5,7 +5,7 @@ package com.zuomagai.mackerel;
  **/
 public class MackerelConfig {
 
-    private String name; 
+    private String name;
 
     // url config
     private String jdbcUrl;
@@ -16,8 +16,10 @@ public class MackerelConfig {
     private int minIdle = 10;
     private int maxSize = 10;
     private long maxWait = 800;
-    private boolean testWhileIdle = true; //连接取出时，如果空闲超过一定时间则要检验有效性
+    private boolean testWhileIdle = true;  // 连接空闲时，是否校验有效性
     private long validateWindow = 1 * 60 * 1000;
+    private long validateIdleTime = 30 * 1000;
+    private int validateTimeout = 5 * 1000;
     private long maxIdleTime = 30 * 60 * 1000; // default 30 minutes
     private long minIdleTime = 10 * 60 * 1000; // default 10 minutes
 
@@ -91,6 +93,26 @@ public class MackerelConfig {
 
     public void setValidateWindow(long validateWindow) {
         this.validateWindow = validateWindow;
+    }
+
+    public void setTestWhileIdle(boolean testWhileIdle) {
+        this.testWhileIdle = testWhileIdle;
+    }
+
+    public long getValidateIdleTime() {
+        return validateIdleTime;
+    }
+
+    public void setValidateIdleTime(long validateIdleTime) {
+        this.validateIdleTime = validateIdleTime;
+    }
+
+    public int getValidateTimeout() {
+        return validateTimeout;
+    }
+
+    public void setValidateTimeout(int validateTimeout) {
+        this.validateTimeout = validateTimeout;
     }
 
     public long getMaxIdleTime() {

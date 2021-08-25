@@ -69,8 +69,8 @@ public class MackerelConnection implements Connection {
      * api支持程度和实现逻辑不一定一致，有的是空方法有的是直接抛出异常；比如 pg不支持 networkTimeout 设置，会抛出异常
      * 所以还是需要根据自己要支持的数据库驱动，根据他们的实现的差异来处理异常（忽略还是阻断执行）
      * 
-     * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开 //TODO
-     * setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
+     * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开 
+     * //TODO setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
      * 
      */
     public void setup() {
@@ -114,7 +114,7 @@ public class MackerelConnection implements Connection {
         // reset connection first
         reset();
         // cas status first & return pool
-        mackerel.returnIdle();
+        mackerel.backToCan();
     }
 
     public void reset() throws SQLException {
@@ -377,7 +377,7 @@ public class MackerelConnection implements Connection {
     public void setReadOnly(boolean readOnly) throws SQLException {
         real.setReadOnly(readOnly);
         this.readOnly = readOnly;
-    } 
+    }
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
