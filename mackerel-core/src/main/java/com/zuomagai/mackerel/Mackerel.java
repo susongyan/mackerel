@@ -33,13 +33,11 @@ public class Mackerel {
     private Connection connection;
     private volatile AtomicInteger status = new AtomicInteger(STATUS_IDLE);
     private long lastTakenOutTime;
-    private long returnTime;
-    private long lastValidateTime;
+    private long idleTime = System.currentTimeMillis();
 
     public Mackerel(MackerelCan mackerelCan, Connection connection) {
         this.mackerelCan = mackerelCan;
         this.connection = new MackerelConnection(this, connection);
-        this.takenOut();
     }
 
     public Connection getConnection() {
@@ -71,15 +69,7 @@ public class Mackerel {
     }
 
     public long getIdleDuration() {
-        return returnTime > 0 ? (System.currentTimeMillis() - returnTime) : 0;
-    }
-
-    public long getLastValidateTime() {
-        return lastValidateTime;
-    }
-
-    public void renewValiateTime() {
-        lastValidateTime = System.currentTimeMillis();
+        return System.currentTimeMillis() - idleTime;
     }
 
     public boolean takenOut() {
@@ -92,7 +82,7 @@ public class Mackerel {
     public boolean backToCan() {
         boolean ret = status.compareAndSet(STATUS_ACTIVE, STATUS_IDLE);
         if (ret) {
-            this.returnTime = System.currentTimeMillis();
+            this.idleTime = System.currentTimeMillis();
             this.mackerelCan.returnIdle(this);
         }
         return ret;
@@ -117,5 +107,10 @@ public class Mackerel {
         } catch (SQLException e) {
             LOGGER.warn("close connection quietly fail", e);
         }
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "@" + Integer.toHexString(hashCode());
     }
 }

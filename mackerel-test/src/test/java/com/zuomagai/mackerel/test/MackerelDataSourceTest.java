@@ -3,6 +3,7 @@ package com.zuomagai.mackerel.test;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import com.zuomagai.mackerel.MackerelConfig;
@@ -19,6 +20,15 @@ public class MackerelDataSourceTest {
         config.setUserName("root");
         config.setPassword("root");
         config.setMaxWait(0);
+        
+        config.setMinIdle(5);
+        config.setMaxSize(10);
+        config.setTestWhileIdle(true);
+        config.setValidateWindow(10000);
+        config.setValidateIdleTime(5000);
+
+        config.setMinIdleTime(30000);
+        config.setMaxIdleTime(60000);
 
         Connection connection = null;
         MackerelDataSource dataSource = null;
@@ -31,6 +41,14 @@ public class MackerelDataSourceTest {
             System.out.println();
             while (result.next()) {
                 System.out.println("id=" + result.getLong(1) + ", name=" + result.getString(2) + ", age=" + result.getInt(3));
+            }
+
+
+            Random random = new Random(5000);
+            while(true) {
+                Connection c = dataSource.getConnection(); 
+                TimeUnit.MILLISECONDS.sleep(random.nextInt(5000)); 
+                c.close(); 
             }
 
         } catch (Exception e) {

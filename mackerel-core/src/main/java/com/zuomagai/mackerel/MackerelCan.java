@@ -65,7 +65,7 @@ public class MackerelCan implements AutoCloseable {
         setTestWhileIdle(config.isTestWhileIdle());
         setValidateWindow(config.getValidateWindow());
         setValidateTimeout(config.getValidateTimeout());
-        setValidateIdleTime(config.getValidateIdleTime()); 
+        setValidateIdleTime(config.getValidateIdleTime());
         setMaxIdleTime(config.getMaxIdleTime());
         setMinIdleTime(config.getMinIdleTime());
     }
@@ -73,17 +73,18 @@ public class MackerelCan implements AutoCloseable {
     public Mackerel getMackerel() {
         long start = System.currentTimeMillis();
         try {
+            Mackerel mackerel = null;
             if (this.maxWait <= 0) {
-                return idleMackerels.takeFirst();
+                mackerel = idleMackerels.takeFirst();
+            } else {
+                long wait = this.maxWait;
+                mackerel = idleMackerels.pollFirst(wait, TimeUnit.MILLISECONDS);
             }
 
-            long wait = this.maxWait;
-            Mackerel mackerel = idleMackerels.pollFirst(wait, TimeUnit.MILLISECONDS);
-            if (mackerel == null)
-                throw new MackerelException(
-                        "cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
-            else
-                return mackerel;
+            if (mackerel != null && mackerel.markActive()) {
+                return mackerel; 
+            }
+            throw new MackerelException("cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
         } catch (InterruptedException e) {
             throw new MackerelException("fetching connection interrupted", e);
         }
@@ -112,12 +113,14 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public void setValidateWindow(long validateWindow) {
-        if (validateWindow < (60 * 1000))
-            throw new IllegalArgumentException("validateWindow cannot less than 1 minute");
+        if (validateWindow < (10 * 1000))
+            throw new IllegalArgumentException("validateWindow cannot less than 10 seconds");
         this.validateWindow = validateWindow;
     }
 
     public void setValidateIdleTime(long validateIdleTime) {
+        if (validateWindow < (1 * 1000))
+            throw new IllegalArgumentException("validateWindow cannot less than 1 seconds"); 
         this.validateIdleTime = validateIdleTime;
     }
 
@@ -132,8 +135,8 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public void setMinIdleTime(long minIdleTime) {
-        if (minIdleTime < 60 * 1000)
-            throw new IllegalArgumentException("minIdleTime cannot less than 1 minute");
+        if (minIdleTime < 30 * 1000)
+            throw new IllegalArgumentException("minIdleTime cannot less than 30 seconds");
         this.minIdleTime = minIdleTime;
     }
 
@@ -197,6 +200,10 @@ public class MackerelCan implements AutoCloseable {
         return mackerels.size();
     }
 
+    public int getCurrentIdleSize() {
+        return (int) mackerels.stream().filter(m -> m.isIdle()).count();
+    }
+
     public CopyOnWriteArrayList<Mackerel> getAllMackerels() {
         return mackerels;
     }
@@ -222,6 +229,6 @@ public class MackerelCan implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "total=" + this.mackerels.size() + ", idle=" + this.idleMackerels.size();
+        return "total=" + this.mackerels.size() + ", idle=" + this.getCurrentIdleSize() + ", blq=" + idleMackerels.size();
     }
 }
