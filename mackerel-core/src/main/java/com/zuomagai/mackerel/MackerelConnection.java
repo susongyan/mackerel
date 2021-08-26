@@ -63,8 +63,20 @@ public class MackerelConnection implements Connection {
 
         setup();
     }
+   
+    @Override
+    public void close() throws SQLException {
+        // reset connection first
+        reset();
+        // cas status first & return pool
+        mackerel.backToCan();
+    }
 
-    /**
+    public void closeInternal() throws SQLException {
+        this.real.close();
+    }
+
+     /**
      * 获取连接的初始属性值，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为 注意: 不同数据库的 jdbc
      * api支持程度和实现逻辑不一定一致，有的是空方法有的是直接抛出异常；比如 pg不支持 networkTimeout 设置，会抛出异常
      * 所以还是需要根据自己要支持的数据库驱动，根据他们的实现的差异来处理异常（忽略还是阻断执行）
@@ -73,7 +85,7 @@ public class MackerelConnection implements Connection {
      * //TODO setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
      * 
      */
-    public void setup() {
+    private void setup() {
 
         // pg不支持 networkTimeut
         // setNetworkTimeout(executor, timeout); 重置的时候 我也不知道怎么设置这个executor => 先不支持
@@ -109,15 +121,7 @@ public class MackerelConnection implements Connection {
         }
     }
 
-    @Override
-    public void close() throws SQLException {
-        // reset connection first
-        reset();
-        // cas status first & return pool
-        mackerel.backToCan();
-    }
-
-    public void reset() throws SQLException {
+    private void reset() throws SQLException {
         if (this.autoCommit != DEFAULT_AUTO_COMMIT) {
             this.real.setAutoCommit(DEFAULT_AUTO_COMMIT);
         }

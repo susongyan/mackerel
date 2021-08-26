@@ -1,5 +1,6 @@
 package com.zuomagai.mackerel;
 
+import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -205,7 +206,7 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public CopyOnWriteArrayList<Mackerel> getAllMackerels() {
-        return mackerels;
+        return this.mackerels;
     }
 
     public void add(Mackerel mackerel) {
@@ -214,17 +215,21 @@ public class MackerelCan implements AutoCloseable {
         this.idleMackerels.addFirst(mackerel);
     }
 
+    public void remove(List<Mackerel> removed) {
+        this.mackerels.removeAll(removed); 
+        this.idleMackerels.removeAll(removed);
+    }
+
     public void returnIdle(Mackerel mackerel) {
         this.idleMackerels.addFirst(mackerel);
-        LOGGER.debug("--> after return: " + toString());
     }
 
     @Override
     public void close() throws Exception {
-        // TODO 关闭任务
-        feeder.close();
-
-        // TODO 关闭所有db连接
+        feeder.close(); 
+        for (Mackerel mackerel : mackerels) {
+            mackerel.closeQuietly();
+        }
     }
 
     @Override

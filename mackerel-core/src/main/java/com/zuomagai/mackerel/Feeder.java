@@ -131,7 +131,7 @@ public class Feeder implements AutoCloseable {
                 // 2. testWhileIdle
                 if (!needEvict && can.isTestWhileIdle() 
                         && underTest.getIdleDuration() > can.getValidateIdleTime()
-                        && underTest.reserve()) { // 这个时候可能被取出了，需要先cas下预占
+                        && underTest.reserve()) {
                     if (!underTest.validate()) {
                         LOGGER.debug("shoevling... found {} invalid!!! going to sweep it", underTest);
                         needEvict = true;
@@ -149,9 +149,7 @@ public class Feeder implements AutoCloseable {
             LOGGER.debug("shovel found {} touch fish or invalid mackerels", toEvicts.size());
             if (toEvicts.size() > 0) {
                 // 先移除这些待关闭的连接， 以免 shouldFeed() 判断不准
-                can.getAllMackerels().removeAll(toEvicts);
-                // 补足连接
-                feeder.feed();
+                can.remove(toEvicts);
                 // close quitely
                 for (Mackerel toEvict : toEvicts) {
                     sweeper.execute(() -> {
@@ -160,6 +158,8 @@ public class Feeder implements AutoCloseable {
                     });
                 }
             }
+            // 补足连接
+            feeder.feed();
         }
     }
 

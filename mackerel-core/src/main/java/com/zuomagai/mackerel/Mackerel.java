@@ -30,10 +30,11 @@ public class Mackerel {
     private static final int STATUS_ACTIVE = 2;
 
     private MackerelCan mackerelCan;
-    private Connection connection;
+    private MackerelConnection connection;
     private volatile AtomicInteger status = new AtomicInteger(STATUS_IDLE);
     private long lastTakenOutTime;
     private long idleTime = System.currentTimeMillis();
+    private long lastValidateTime;
 
     public Mackerel(MackerelCan mackerelCan, Connection connection) {
         this.mackerelCan = mackerelCan;
@@ -72,6 +73,10 @@ public class Mackerel {
         return System.currentTimeMillis() - idleTime;
     }
 
+    public long getLastValidateDuration() {
+        return System.currentTimeMillis() - lastValidateTime;
+    }
+
     public boolean takenOut() {
         boolean ret = status.compareAndSet(STATUS_IDLE, STATUS_ACTIVE);
         if (ret)
@@ -84,6 +89,7 @@ public class Mackerel {
         if (ret) {
             this.idleTime = System.currentTimeMillis();
             this.mackerelCan.returnIdle(this);
+            LOGGER.debug("--> after return: " + mackerelCan.toString());
         }
         return ret;
     }
@@ -91,6 +97,7 @@ public class Mackerel {
     public boolean validate() {
         try {
             //暂不考虑的古董版本不支持 jdbc4.0 的驱动
+            lastValidateTime = System.currentTimeMillis();
             return this.connection.isValid(mackerelCan.getValidateTimeout() / 1000);
         } catch (SQLException e) {
             LOGGER.error("valid connection fail", e);
@@ -101,7 +108,8 @@ public class Mackerel {
     public void closeQuietly() {
         try {
             if (!this.connection.isClosed()) {
-                this.connection.close();
+                LOGGER.debug("closing connection quietly... " + this.toString());
+                this.connection.closeInternal();
             }
             this.connection = null;
         } catch (SQLException e) {
