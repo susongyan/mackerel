@@ -9,10 +9,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -107,36 +105,33 @@ public class Feeder implements AutoCloseable {
             List<Mackerel> toEvicts = new ArrayList<>();
             for (int i = 0; i < snapshot.size(); i++) {
                 Mackerel underTest = snapshot.get(i);
+
+                // 清理 testWhileIdle 阶段标记的不可用连接
+                if (underTest.isEvicted()) { 
+                    LOGGER.debug("shoveling... found {} evicted!!! going to sweep it", underTest);
+                    toEvicts.add(underTest);
+                    currentTotal--;
+                    continue;
+                }
+
                 // 只检测空闲连接
                 if (!underTest.isIdle()) {
                     continue;
                 }
 
-                // 1. minIdleTime, maxIdleTime
+                // minIdleTime, maxIdleTime
                 boolean needEvict = false;
                 if (currentTotal > can.getMinIdle()) {
                     if (underTest.getIdleDuration() > can.getMinIdleTime() && underTest.reserve()) {
-                        LOGGER.debug("shoevling... found {} touch fish over minIdleTime={}ms!!! going to sweep it",
+                        LOGGER.debug("shoveling... found {} touch fish over minIdleTime={}ms!!! going to sweep it",
                                 underTest, can.getMinIdleTime());
                         needEvict = true;
                     }
                 } else {
                     if (underTest.getIdleDuration() > can.getMaxIdleTime() && underTest.reserve()) {
-                        LOGGER.debug("shoevling... found {} touch fish over maxIdleTime={}ms!!! going to sweep it",
+                        LOGGER.debug("shoveling... found {} touch fish over maxIdleTime={}ms!!! going to sweep it",
                                 underTest, can.getMaxIdleTime());
                         needEvict = true;
-                    }
-                }
-
-                // 2. testWhileIdle
-                if (!needEvict && can.isTestWhileIdle() 
-                        && underTest.getIdleDuration() > can.getValidateIdleTime()
-                        && underTest.reserve()) {
-                    if (!underTest.validate()) {
-                        LOGGER.debug("shoevling... found {} invalid!!! going to sweep it", underTest);
-                        needEvict = true;
-                    } else {
-                        underTest.markIdle();
                     }
                 }
 
@@ -146,7 +141,7 @@ public class Feeder implements AutoCloseable {
                 }
             }
 
-            LOGGER.debug("shovel found {} touch fish or invalid mackerels", toEvicts.size());
+            LOGGER.debug("shoveling... found {} mackerels need be evicted", toEvicts.size());
             if (toEvicts.size() > 0) {
                 // 先移除这些待关闭的连接， 以免 shouldFeed() 判断不准
                 can.remove(toEvicts);
@@ -160,22 +155,6 @@ public class Feeder implements AutoCloseable {
             }
             // 补足连接
             feeder.feed();
-        }
-    }
-
-    static class NamedThreadFactory implements ThreadFactory {
-        private AtomicInteger id = new AtomicInteger(1);
-        private String threadNamePrefix;
-
-        public NamedThreadFactory(String prefix) {
-            this.threadNamePrefix = prefix;
-        }
-
-        @Override
-        public Thread newThread(Runnable r) {
-            Thread thread = new Thread(r);
-            thread.setName(threadNamePrefix + "#" + id.getAndIncrement());
-            return thread;
         }
     }
 

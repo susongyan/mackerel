@@ -25,7 +25,7 @@ public class MackerelDataSourceTest {
         config.setMaxSize(10);
         config.setTestWhileIdle(true);
         config.setValidateWindow(10000);
-        config.setValidateIdleTime(5000);
+        config.setValidateIdleTime(1000);
 
         config.setMinIdleTime(30000);
         config.setMaxIdleTime(60000);
@@ -44,10 +44,11 @@ public class MackerelDataSourceTest {
             }
 
 
-            Random random = new Random(5000);
+            Random random = new Random(1000);
             while(true) {
+                TimeUnit.MILLISECONDS.sleep(2000); 
                 Connection c = dataSource.getConnection(); 
-                TimeUnit.MILLISECONDS.sleep(random.nextInt(5000)); 
+                TimeUnit.MILLISECONDS.sleep(random.nextInt(1000)); 
                 c.close(); 
             }
 

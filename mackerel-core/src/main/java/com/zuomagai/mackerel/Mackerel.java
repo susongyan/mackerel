@@ -49,6 +49,10 @@ public class Mackerel {
         return status.get() == STATUS_IDLE;
     }
 
+    public boolean isEvicted() {
+        return status.get() == STATUS_EVICTED;
+    }
+
     public boolean reserve() {
         return status.compareAndSet(STATUS_IDLE, STATUS_RESERVED);
     }
@@ -96,11 +100,16 @@ public class Mackerel {
 
     public boolean validate() {
         try {
+            long start = System.currentTimeMillis();
+            LOGGER.debug("validate... {}", toString());
             //暂不考虑的古董版本不支持 jdbc4.0 的驱动
             lastValidateTime = System.currentTimeMillis();
-            return this.connection.isValid(mackerelCan.getValidateTimeout() / 1000);
+            boolean valid = this.connection.isValid(mackerelCan.getValidateTimeout() / 1000);
+            LOGGER.debug("validate {} {} {}", toString(), (System.currentTimeMillis() - start) + "ms",
+                    valid ? "success" : "fail");
+            return valid;
         } catch (SQLException e) {
-            LOGGER.error("valid connection fail", e);
+            LOGGER.error("validate connection fail", e);
             return false;
         }
     }

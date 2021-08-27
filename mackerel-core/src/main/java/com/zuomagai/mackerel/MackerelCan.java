@@ -73,19 +73,33 @@ public class MackerelCan implements AutoCloseable {
 
     public Mackerel getMackerel() {
         long start = System.currentTimeMillis();
+        long end = start + this.maxWait;
+        long waitTime = this.maxWait > 0 ? this.maxWait : 0;
         try {
-            Mackerel mackerel = null;
-            if (this.maxWait <= 0) {
-                mackerel = idleMackerels.takeFirst();
-            } else {
-                long wait = this.maxWait;
-                mackerel = idleMackerels.pollFirst(wait, TimeUnit.MILLISECONDS);
-            }
+            while (waitTime >= 0) {
+                Mackerel mackerel = null;
+                if (this.maxWait <= 0) {
+                    mackerel = idleMackerels.takeFirst();
+                } else if (waitTime > 0) {
+                    mackerel = idleMackerels.pollFirst(waitTime, TimeUnit.MILLISECONDS);
+                    waitTime = end - System.currentTimeMillis();
+                }
 
-            if (mackerel != null && mackerel.markActive()) {
-                return mackerel; 
+                if (mackerel != null) {
+                    //1. testWhileIdle 
+                    if (testWhileIdle && mackerel.getIdleDuration() > validateIdleTime && !mackerel.validate()) {
+                        mackerel.markEvicted();
+                    }
+                    //2. markActive
+                    else if (mackerel.markActive()) {
+                        return mackerel;
+                    }
+                }
+                
+                //todo max？ 
             }
-            throw new MackerelException("cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
+            throw new MackerelException(
+                    "cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
         } catch (InterruptedException e) {
             throw new MackerelException("fetching connection interrupted", e);
         }
@@ -121,7 +135,7 @@ public class MackerelCan implements AutoCloseable {
 
     public void setValidateIdleTime(long validateIdleTime) {
         if (validateWindow < (1 * 1000))
-            throw new IllegalArgumentException("validateWindow cannot less than 1 seconds"); 
+            throw new IllegalArgumentException("validateWindow cannot less than 1 seconds");
         this.validateIdleTime = validateIdleTime;
     }
 
@@ -216,7 +230,7 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public void remove(List<Mackerel> removed) {
-        this.mackerels.removeAll(removed); 
+        this.mackerels.removeAll(removed);
         this.idleMackerels.removeAll(removed);
     }
 
@@ -226,7 +240,7 @@ public class MackerelCan implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
-        feeder.close(); 
+        feeder.close();
         for (Mackerel mackerel : mackerels) {
             mackerel.closeQuietly();
         }
@@ -234,6 +248,7 @@ public class MackerelCan implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "total=" + this.mackerels.size() + ", idle=" + this.getCurrentIdleSize() + ", blq=" + idleMackerels.size();
+        return "total=" + this.mackerels.size() + ", idle=" + this.getCurrentIdleSize() + ", blq="
+                + idleMackerels.size();
     }
 }
