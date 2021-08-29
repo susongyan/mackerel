@@ -5,6 +5,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,7 @@ public class MackerelCan implements AutoCloseable {
     private BlockingDeque<Mackerel> idleMackerels = new LinkedBlockingDeque<>();
 
     private Feeder feeder;
+    private AtomicInteger waitingThreadCount = new AtomicInteger(0);
 
     private final String jdbcUrl;
     private final String userName;
@@ -75,6 +77,8 @@ public class MackerelCan implements AutoCloseable {
         long start = System.currentTimeMillis();
         long end = start + this.maxWait;
         long waitTime = this.maxWait > 0 ? this.maxWait : 0;
+
+        int waiting = this.waitingThreadCount.getAndIncrement();
         try {
             while (waitTime >= 0) {
                 Mackerel mackerel = null;
@@ -95,13 +99,14 @@ public class MackerelCan implements AutoCloseable {
                         return mackerel;
                     }
                 }
-                
-                //todo max？ 
             }
             throw new MackerelException(
                     "cannot get connection after wait " + (System.currentTimeMillis() - start) + "ms");
         } catch (InterruptedException e) {
             throw new MackerelException("fetching connection interrupted", e);
+        } finally {
+            feeder.feed(waiting);
+            this.waitingThreadCount.decrementAndGet();
         }
     }
 
@@ -215,8 +220,8 @@ public class MackerelCan implements AutoCloseable {
         return mackerels.size();
     }
 
-    public int getCurrentIdleSize() {
-        return (int) mackerels.stream().filter(m -> m.isIdle()).count();
+    public int getWaitingThreadCount() {
+        return waitingThreadCount.get();
     }
 
     public CopyOnWriteArrayList<Mackerel> getAllMackerels() {
@@ -248,7 +253,6 @@ public class MackerelCan implements AutoCloseable {
 
     @Override
     public String toString() {
-        return "total=" + this.mackerels.size() + ", idle=" + this.getCurrentIdleSize() + ", blq="
-                + idleMackerels.size();
+        return "total=" + this.mackerels.size() + ", idle=" + idleMackerels.size();
     }
 }

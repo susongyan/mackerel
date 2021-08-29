@@ -79,9 +79,9 @@ public class Feeder implements AutoCloseable {
     }
 
     private boolean shouldFeed() {
-        int onCreating = creatingQueue.size();
-        int currentSize = mackerelCan.getCurrentSize();
-        return mackerelCan.getMaxSize() >= onCreating + currentSize;
+        int currentSize = mackerelCan.getCurrentSize() + creatingQueue.size();
+        return (mackerelCan.getMaxSize() > currentSize)
+                && (mackerelCan.getWaitingThreadCount() > 0 || currentSize < mackerelCan.getMinIdle());
     }
 
     static class Shovel implements Runnable {
