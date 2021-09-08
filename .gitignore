@@ -27,9 +27,12 @@ hs_err_pid*
 *.iml
 .settings/
 
-## maven
-target/
-
 ## eclipse
 .classpath
 .project
+
+## vs code
+.vscode/
+
+## maven
+target/

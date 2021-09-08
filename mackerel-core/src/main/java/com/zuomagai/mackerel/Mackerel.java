@@ -58,6 +58,7 @@ public class Mackerel {
     }
 
     public boolean markActive() {
+        this.lastTakenOutTime = System.currentTimeMillis();
         return status.compareAndSet(STATUS_IDLE, STATUS_ACTIVE);
     }
 

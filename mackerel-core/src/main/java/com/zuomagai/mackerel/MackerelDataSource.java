@@ -14,40 +14,47 @@ import javax.sql.DataSource;
  *
  * @author S.S.Y
  **/
-public class MackerelDataSource implements DataSource, AutoCloseable{
+public class MackerelDataSource implements DataSource, AutoCloseable {
 
     private static final AtomicInteger id = new AtomicInteger(0);
+    private static final int STATUS_OPEN = 1;
+    private static final int STATUS_SHUTDOWN = 2;
+
     private String name;
-    private MackerelConfig config;
     private MackerelCan mackerelCan;
-    private volatile boolean inited = false; 
+    private volatile int status;
 
     public MackerelDataSource(MackerelConfig config) {
         validateConfig(config);
-        this.config = config;
         this.name = config.getName();
-        this.mackerelCan = new MackerelCan(config); 
-   
-        //TODO 是否需要lazy init？ 
-        this.mackerelCan.init();
+        this.mackerelCan = new MackerelCan(config);
+        if (config.isCheckFailFast()) {
+            this.mackerelCan.checkFailFast();
+        }
+    }
+
+    public void init() {
+        insureOpen();
     }
 
     @Override
     public Connection getConnection() throws SQLException {
+        insureOpen();
         return mackerelCan.getMackerel().getConnection();
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
+        insureOpen();
         return mackerelCan.getMackerel().getConnection();
     }
- 
-    private void validateConfig(MackerelConfig config) { 
-         if (config.getName() == null) {
-            config.setName("MackerelDataSource#" + id.getAndIncrement()); 
-         }
 
-         //TODO 初始化的时候要不要检查 jdbcUrl、username、password的有效性？
+    private void validateConfig(MackerelConfig config) {
+        if (config.getName() == null) {
+            config.setName("MackerelDataSource#" + id.getAndIncrement());
+        }
+
+        //TODO 初始化的时候要不要检查 jdbcUrl、username、password的有效性？
     }
 
     /**
@@ -109,6 +116,16 @@ public class MackerelDataSource implements DataSource, AutoCloseable{
     public void close() throws Exception {
         //TODO: close pool resources 
         mackerelCan.close();
-        
+    }
+
+    private synchronized void insureOpen() {
+        if (status == STATUS_SHUTDOWN) {
+            throw new MackerelStatusException("Mackerel DataSource has bean closed");
+        }
+
+        if (status != STATUS_OPEN) {
+            this.mackerelCan.init();
+            status = STATUS_OPEN;
+        }
     }
 }

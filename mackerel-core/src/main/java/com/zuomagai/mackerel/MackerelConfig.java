@@ -27,6 +27,8 @@ public class MackerelConfig {
     private String catalog;
     private String schema;
 
+    private boolean checkFailFast = false;
+
     public String getName() {
         return name;
     }
@@ -146,4 +148,13 @@ public class MackerelConfig {
     public String getSchema() {
         return schema;
     }
+
+    public boolean isCheckFailFast() {
+        return checkFailFast;
+    }
+
+    public void setCheckFailFast(boolean checkFailFast) {
+        this.checkFailFast = checkFailFast;
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.zuomagai.mackerel;
 
+import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -56,9 +57,31 @@ public class MackerelCan implements AutoCloseable {
 
     public void init() {
         // feeder
-        feeder = new Feeder(this);
+        feeder = new Feeder(this);  
+        try {
+            feeder.incubateMackerel();
+        } catch (SQLException e) {
+            throw new MackerelException("mackerel init check fail fast", e);
+        }
         feeder.init();
-        // evictor/cat
+    }
+
+    public void checkFailFast() {
+        //重试三次，避免由于网络原因导致的连接失败
+        int retries = 3;
+        SQLException fail = null;
+        while (retries > 0) {
+            try {
+                this.feeder.incubateMackerel();
+                return;
+            } catch (SQLException e) {
+                retries--;
+                fail = e;
+            }
+        }
+        if (fail != null) {
+            throw new MackerelInitException("check fail fast", fail);
+        }
     }
 
     private void validateAndInitConfig(MackerelConfig config) {

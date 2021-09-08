@@ -61,10 +61,10 @@ public class MackerelDataSourceTest {
                     while (true) {
                         try {
                             Random random = new Random();
-                            TimeUnit.SECONDS.sleep(random.nextInt(5));
+                            TimeUnit.MILLISECONDS.sleep(500 + random.nextInt(1000));
                             Connection c = dataSource.getConnection();
                             long bizStart = System.currentTimeMillis();
-                            TimeUnit.MILLISECONDS.sleep(random.nextInt(2000)); //fake use time
+                            TimeUnit.MILLISECONDS.sleep(500 + random.nextInt(1000)); //fake use time
                             LOGGER.info("do some logic...{}ms", (System.currentTimeMillis() - bizStart));
                             c.close();
                         } catch (Exception e) {
@@ -128,7 +128,7 @@ public class MackerelDataSourceTest {
                             TimeUnit.SECONDS.sleep(random.nextInt(5));
                             Connection c = dataSource.getConnection();
                             long bizStart = System.currentTimeMillis();
-                            TimeUnit.MILLISECONDS.sleep(1000 + random.nextInt(2000)); //fake use time
+                            TimeUnit.MILLISECONDS.sleep(600 + random.nextInt(2000)); //fake use time
                             LOGGER.info("do some logic...{}ms", (System.currentTimeMillis() - bizStart));
                             c.close();
                         } catch (Exception e) {
