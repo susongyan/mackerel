@@ -5,7 +5,7 @@ package com.zuomagai.mackerel;
  **/
 public class MackerelConfig {
 
-    private String name;
+    private String poolName;
 
     // url config
     private String jdbcUrl;
@@ -29,13 +29,13 @@ public class MackerelConfig {
 
     private boolean checkFailFast = false;
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
+   public String getPoolName() {
+       return poolName;
+   }
+   
+   public void setPoolName(String poolName) {
+       this.poolName = poolName;
+   }
 
     public String getJdbcUrl() {
         return jdbcUrl;

@@ -152,4 +152,65 @@ public class MackerelDataSourceTest {
             }
         } 
     }
+
+    @Test
+    public void testClose() {
+        MackerelConfig config = new MackerelConfig();
+        config.setPoolName("testDatabase#1");
+        config.setJdbcUrl(jdbcUrl);
+        config.setUserName(userName);
+        config.setPassword(password);
+
+        config.setMaxWait(1600);
+        config.setMinIdle(5);
+        config.setMaxSize(10);
+        config.setTestWhileIdle(true);
+        config.setValidateWindow(10000);
+        config.setValidateIdleTime(1000);
+
+        config.setMinIdleTime(30000);
+        config.setMaxIdleTime(60000);
+
+        final MackerelDataSource dataSource = new MackerelDataSource(config);
+
+        try {
+              // 模拟3个连接活跃，1个连接每隔maxIdleTime被回收重建
+              for (int i = 0; i < 3; i++) {
+                new Thread(() -> {
+                    while (true) {
+                        try {
+                            Random random = new Random();
+                            TimeUnit.MILLISECONDS.sleep(500 + random.nextInt(1000));
+                            Connection c = dataSource.getConnection();
+                            long bizStart = System.currentTimeMillis();
+                            TimeUnit.MILLISECONDS.sleep(500 + random.nextInt(1000)); //fake use time
+                            LOGGER.info("do some logic...{}ms", (System.currentTimeMillis() - bizStart));
+                            c.close();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }).start();
+            }
+
+            TimeUnit.SECONDS.sleep(10);
+            Connection activeConnection = dataSource.getConnection();
+            activeConnection.prepareStatement("select 1;").executeQuery();
+            dataSource.close();
+            System.out.println("connection is closed? after datasouece closed: " + activeConnection.isClosed());
+
+            dataSource.getConnection();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (dataSource != null) {
+                try {
+                    dataSource.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } 
+    }
 }

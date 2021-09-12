@@ -5,28 +5,25 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 import javax.sql.DataSource;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author S.S.Y
  **/
 public class MackerelDataSource implements DataSource, AutoCloseable {
-
-    private static final AtomicInteger id = new AtomicInteger(0);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MackerelDataSource.class); 
     private static final int STATUS_OPEN = 1;
     private static final int STATUS_SHUTDOWN = 2;
 
-    private String name;
     private MackerelCan mackerelCan;
     private volatile int status;
 
     public MackerelDataSource(MackerelConfig config) {
-        validateConfig(config);
-        this.name = config.getName();
         this.mackerelCan = new MackerelCan(config);
         if (config.isCheckFailFast()) {
             this.mackerelCan.checkFailFast();
@@ -49,14 +46,6 @@ public class MackerelDataSource implements DataSource, AutoCloseable {
         return mackerelCan.getMackerel().getConnection();
     }
 
-    private void validateConfig(MackerelConfig config) {
-        if (config.getName() == null) {
-            config.setName("MackerelDataSource#" + id.getAndIncrement());
-        }
-
-        //TODO 初始化的时候要不要检查 jdbcUrl、username、password的有效性？
-    }
-
     /**
      * mysql-connector 5.0.0 (2005-12-22)之后就支持 ServiceLoader SPI，不需要显示 Class.forName 显示注册驱动
      * pg connector Version 42.2.13 (2020-06-04) 也支持 ServiceLoader SPI了
@@ -74,17 +63,16 @@ public class MackerelDataSource implements DataSource, AutoCloseable {
     }
 
     @Override
-    public <T> T unwrap(Class<T> iface) throws SQLException {
-        try {
-            return iface.cast(this);
-        } catch (Exception e) {
-            throw new SQLException(e);
-        }
+    public boolean isWrapperFor(Class<?> iface) throws SQLException {
+        return iface.isAssignableFrom(this.getClass());
     }
 
     @Override
-    public boolean isWrapperFor(Class<?> iface) throws SQLException {
-        return this.getClass().isAssignableFrom(iface);
+    public <T> T unwrap(Class<T> iface) throws SQLException {
+        if (iface.isInstance(this)) {
+            return iface.cast(this);
+        }
+        throw new SQLException("cannot unwrap MackerelDataSource to " + iface.getName());
     }
 
     @Override
@@ -108,24 +96,29 @@ public class MackerelDataSource implements DataSource, AutoCloseable {
     }
 
     @Override
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+    public java.util.logging.Logger getParentLogger() throws SQLFeatureNotSupportedException {
         throw new SQLFeatureNotSupportedException();
     }
 
     @Override
     public void close() throws Exception {
-        //TODO: close pool resources 
+        if (status == STATUS_SHUTDOWN) {
+            return;
+        }
+        status = STATUS_SHUTDOWN;
+        LOGGER.debug("closing MackerelDataSource {}...", this.mackerelCan);
         mackerelCan.close();
     }
 
-    private synchronized void insureOpen() {
+    private void insureOpen() {
         if (status == STATUS_SHUTDOWN) {
-            throw new MackerelStatusException("Mackerel DataSource has bean closed");
+            throw new MackerelStatusException("MackerelDataSource " + this.mackerelCan + " has bean closed");
         }
 
         if (status != STATUS_OPEN) {
-            this.mackerelCan.init();
+            LOGGER.debug("init MackerelDataSource {}...", this.mackerelCan);
             status = STATUS_OPEN;
+            this.mackerelCan.init();
         }
     }
 }

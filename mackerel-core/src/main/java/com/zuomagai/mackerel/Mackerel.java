@@ -2,6 +2,7 @@ package com.zuomagai.mackerel;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -94,7 +95,7 @@ public class Mackerel {
         if (ret) {
             this.idleTime = System.currentTimeMillis();
             this.mackerelCan.returnIdle(this);
-            LOGGER.debug("--> after return: " + mackerelCan.toString());
+            LOGGER.debug("--> after return: " + mackerelCan.getStatistics());
         }
         return ret;
     }
@@ -118,13 +119,26 @@ public class Mackerel {
     public void closeQuietly() {
         try {
             if (!this.connection.isClosed()) {
-                LOGGER.debug("closing connection quietly... " + this.toString());
-                this.connection.closeInternal();
+                LOGGER.debug("closing connection quietly... {}", this);
+                this.connection.closePhysical();
             }
             this.connection = null;
         } catch (SQLException e) {
             LOGGER.warn("close connection quietly fail", e);
         }
+    }
+    
+    public void abortQuietly(Executor executor) {
+        try {
+            if (!this.connection.isClosed()) {
+                LOGGER.debug("abort connection quietly... {}", this);
+                this.connection.abort(executor);
+            }
+            this.connection = null;
+        } catch (SQLException e) {
+            LOGGER.warn("abort connection quietly fail", e);
+        }
+        
     }
 
     @Override

@@ -72,7 +72,12 @@ public class MackerelConnection implements Connection {
         mackerel.backToCan();
     }
 
-    public void closeInternal() throws SQLException {
+    /**
+     * 关闭物理连接
+     * 
+     * @throws SQLException
+     */
+    public void closePhysical() throws SQLException {
         this.real.close();
     }
 
@@ -144,8 +149,8 @@ public class MackerelConnection implements Connection {
 
         this.real.clearWarnings();
     }
-
     // region delegate
+
     @Override
     public void abort(Executor executor) throws SQLException {
         real.abort(executor);

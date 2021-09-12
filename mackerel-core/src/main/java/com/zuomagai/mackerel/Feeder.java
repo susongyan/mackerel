@@ -24,10 +24,11 @@ import org.slf4j.LoggerFactory;
 public class Feeder implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Feeder.class);
 
+    private volatile boolean closed = false;
     private MackerelCan mackerelCan;
-    private ExecutorService feedExecutor; // 投喂者线程
+    private ThreadPoolExecutor feedExecutor; // 投喂者线程
     private ScheduledExecutorService shovelScheduler; // 铲屎线程
-    private ExecutorService sweepExecutor; //清理线程
+    private ThreadPoolExecutor sweepExecutor; //清理线程
     private LinkedBlockingQueue<Runnable> creatingQueue;
 
     public Feeder(MackerelCan mackerelCan) {
@@ -87,6 +88,9 @@ public class Feeder implements AutoCloseable {
     }
 
     private boolean shouldFeed() {
+        if (this.closed) {
+            LOGGER.debug("feeder is closed, not feed anymore");
+        }
         int currentSize = mackerelCan.getCurrentSize() + creatingQueue.size();
         return (mackerelCan.getMaxSize() > currentSize)
                 && (mackerelCan.getWaitingThreadCount() > 0 || currentSize < mackerelCan.getMinIdle());
@@ -167,10 +171,12 @@ public class Feeder implements AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
-        // 直接关闭运行中的任务
-        feedExecutor.shutdownNow();
-        sweepExecutor.shutdownNow();
-        shovelScheduler.shutdownNow();
+    public void close() {
+        LOGGER.debug("closing feeder...");
+        this.closed = true;
+        //注意顺序
+        feedExecutor.shutdown();
+        shovelScheduler.shutdown();
+        sweepExecutor.shutdown();
     }
 }

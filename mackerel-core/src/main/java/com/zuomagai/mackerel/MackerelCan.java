@@ -4,6 +4,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,15 +20,18 @@ import org.slf4j.LoggerFactory;
  **/
 public class MackerelCan implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MackerelCan.class);
+    private static final AtomicInteger id = new AtomicInteger(0);
 
     private CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
 
     // FILO后进先出，刚用完归还的连接相对于空闲较久的连接更鲜活
     private BlockingDeque<Mackerel> idleMackerels = new LinkedBlockingDeque<>();
 
+    private volatile boolean closed = false;
     private Feeder feeder;
     private AtomicInteger waitingThreadCount = new AtomicInteger(0);
 
+    private final String poolName;
     private final String jdbcUrl;
     private final String userName;
     private final String password;
@@ -47,6 +52,10 @@ public class MackerelCan implements AutoCloseable {
     // endregion
 
     public MackerelCan(MackerelConfig config) {
+        if (config.getPoolName() == null) {
+            config.setPoolName("MackerelDataSource#" + id.getAndIncrement());
+        }
+        this.poolName = config.getPoolName();
         this.jdbcUrl = config.getJdbcUrl();
         this.userName = config.getUserName();
         this.password = config.getPassword();
@@ -57,12 +66,7 @@ public class MackerelCan implements AutoCloseable {
 
     public void init() {
         // feeder
-        feeder = new Feeder(this);  
-        try {
-            feeder.incubateMackerel();
-        } catch (SQLException e) {
-            throw new MackerelException("mackerel init check fail fast", e);
-        }
+        feeder = new Feeder(this);
         feeder.init();
     }
 
@@ -103,7 +107,7 @@ public class MackerelCan implements AutoCloseable {
 
         int waiting = this.waitingThreadCount.getAndIncrement();
         try {
-            while (waitTime >= 0) {
+            while (waitTime >= 0 && !this.closed) {
                 Mackerel mackerel = null;
                 if (this.maxWait <= 0) {
                     mackerel = idleMackerels.takeFirst();
@@ -128,7 +132,9 @@ public class MackerelCan implements AutoCloseable {
         } catch (InterruptedException e) {
             throw new MackerelException("fetching connection interrupted", e);
         } finally {
-            feeder.feed(waiting);
+            if (!this.closed) {
+                feeder.feed(waiting);
+            }
             this.waitingThreadCount.decrementAndGet();
         }
     }
@@ -266,16 +272,34 @@ public class MackerelCan implements AutoCloseable {
         this.idleMackerels.addFirst(mackerel);
     }
 
+    public String getStatistics() {
+        return "total=" + this.mackerels.size() + ", idle=" + idleMackerels.size() + ", waiting=" + waitingThreadCount.get();
+    }
+
     @Override
     public void close() throws Exception {
+        LOGGER.debug("closing MackerelCan...");
+
+        this.closed = true;
+
         feeder.close();
+
+        ExecutorService abortExecutor = Executors.newFixedThreadPool(1);
         for (Mackerel mackerel : mackerels) {
-            mackerel.closeQuietly();
+            if (mackerel.isIdle()) {
+                mackerel.closeQuietly();
+            } else {
+                //根据 abort() 的语义，正在执行的连接，基于底层驱动的实现逻辑，允许sql执行完毕再关闭
+                mackerel.abortQuietly(abortExecutor);
+            }
         }
+        abortExecutor.shutdown();
+        mackerels.clear();
+        idleMackerels.clear();
     }
 
     @Override
     public String toString() {
-        return "total=" + this.mackerels.size() + ", idle=" + idleMackerels.size();
+        return this.poolName;
     }
 }
