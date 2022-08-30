@@ -1,34 +1,18 @@
 package com.zuomagai.mackerel;
 
-import java.sql.Array;
-import java.sql.Blob;
-import java.sql.CallableStatement;
-import java.sql.Clob;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.NClob;
-import java.sql.PreparedStatement;
-import java.sql.SQLClientInfoException;
-import java.sql.SQLException;
-import java.sql.SQLFeatureNotSupportedException;
-import java.sql.SQLWarning;
-import java.sql.SQLXML;
-import java.sql.Savepoint;
-import java.sql.Statement;
-import java.sql.Struct;
+import com.zuomagai.mackerel.util.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.*;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executor;
 
-import com.zuomagai.mackerel.util.StringUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * proxy connection (1) close => return to pool (2) do some statics monitor
- * 
+ *
  * @author S.S.Y
  **/
 public class MackerelConnection implements Connection {
@@ -38,8 +22,8 @@ public class MackerelConnection implements Connection {
     private static final boolean DEFAULT_READ_ONLY = false;
     private static final int ISOLATION_NOT_SET = -1;
 
-    private Mackerel mackerel;
-    private Connection real;
+    private final Mackerel mackerel;
+    private final Connection real;
 
     private boolean autoCommit = DEFAULT_AUTO_COMMIT;
     private boolean readOnly = DEFAULT_READ_ONLY;
@@ -63,7 +47,7 @@ public class MackerelConnection implements Connection {
 
         setup();
     }
-   
+
     @Override
     public void close() throws SQLException {
         // reset connection first
@@ -74,21 +58,20 @@ public class MackerelConnection implements Connection {
 
     /**
      * 关闭物理连接
-     * 
+     *
      * @throws SQLException
      */
     public void closePhysical() throws SQLException {
         this.real.close();
     }
 
-     /**
+    /**
      * 获取连接的初始属性值，以便连接归还的时候重置会话级别的属性，避免影响下次连接取出后的行为 注意: 不同数据库的 jdbc
      * api支持程度和实现逻辑不一定一致，有的是空方法有的是直接抛出异常；比如 pg不支持 networkTimeout 设置，会抛出异常
      * 所以还是需要根据自己要支持的数据库驱动，根据他们的实现的差异来处理异常（忽略还是阻断执行）
-     * 
-     * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开 
+     * <p>
+     * //TODO 异常处理， 底层连接每次set属性的时候都会检查连接是否已关闭，虽然说刚创建的连接一般是可用的，但是不能保证问题导致连接断开
      * //TODO setUp 的处理挪到 can 池子里，有些判断是全局的，如supportNetworkTimeout 判断一次就好了 ?
-     * 
      */
     private void setup() {
 
@@ -299,7 +282,7 @@ public class MackerelConnection implements Connection {
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException {
+                                         int resultSetHoldability) throws SQLException {
         return real.prepareCall(sql, resultSetType, resultSetConcurrency);
     }
 
@@ -331,7 +314,7 @@ public class MackerelConnection implements Connection {
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException {
+                                              int resultSetHoldability) throws SQLException {
         return real.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
     }
 

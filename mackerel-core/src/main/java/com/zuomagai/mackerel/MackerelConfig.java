@@ -29,13 +29,13 @@ public class MackerelConfig {
 
     private boolean checkFailFast = false;
 
-   public String getPoolName() {
-       return poolName;
-   }
-   
-   public void setPoolName(String poolName) {
-       this.poolName = poolName;
-   }
+    public String getPoolName() {
+        return poolName;
+    }
+
+    public void setPoolName(String poolName) {
+        this.poolName = poolName;
+    }
 
     public String getJdbcUrl() {
         return jdbcUrl;

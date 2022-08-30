@@ -1,31 +1,25 @@
 package com.zuomagai.mackerel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.concurrent.*;
 
 /**
  * 卑微铲屎官，负责补足罐头里的鱼和剔除多余的
- * 
+ *
  * @author S.S.Y
  */
 public class Feeder implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Feeder.class);
 
     private volatile boolean closed = false;
-    private MackerelCan mackerelCan;
+    private final MackerelCan mackerelCan;
     private ThreadPoolExecutor feedExecutor; // 投喂者线程
     private ScheduledExecutorService shovelScheduler; // 铲屎线程
     private ThreadPoolExecutor sweepExecutor; //清理线程
@@ -48,7 +42,7 @@ public class Feeder implements AutoCloseable {
     }
 
     public void feed(int number) {
-        if (number <=0) 
+        if (number <= 0)
             return;
         for (int i = 0; i < number; i++) {
             feedExecutor.execute(() -> {
@@ -74,7 +68,7 @@ public class Feeder implements AutoCloseable {
         }
     }
 
-    public void incubateMackerel() throws SQLException{
+    public void incubateMackerel() throws SQLException {
         Connection connection = null;
         long start = System.currentTimeMillis();
         LOGGER.debug("-------creating new connection ------");
@@ -119,7 +113,7 @@ public class Feeder implements AutoCloseable {
                 Mackerel underTest = snapshot.get(i);
 
                 // 清理 testWhileIdle 阶段标记的不可用连接
-                if (underTest.isEvicted()) { 
+                if (underTest.isEvicted()) {
                     LOGGER.debug("shoveling... found {} evicted!!! going to sweep it", underTest);
                     toEvicts.add(underTest);
                     currentTotal--;

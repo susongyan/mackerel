@@ -1,35 +1,30 @@
 package com.zuomagai.mackerel;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * 马鲛鱼罐头 (connection pool)
- * 
+ *
  * @author S.S.Y
  **/
 public class MackerelCan implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MackerelCan.class);
     private static final AtomicInteger id = new AtomicInteger(0);
 
-    private CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
+    private final CopyOnWriteArrayList<Mackerel> mackerels = new CopyOnWriteArrayList<>();
 
     // FILO后进先出，刚用完归还的连接相对于空闲较久的连接更鲜活
-    private BlockingDeque<Mackerel> idleMackerels = new LinkedBlockingDeque<>();
+    private final BlockingDeque<Mackerel> idleMackerels = new LinkedBlockingDeque<>();
 
     private volatile boolean closed = false;
     private Feeder feeder;
-    private AtomicInteger waitingThreadCount = new AtomicInteger(0);
+    private final AtomicInteger waitingThreadCount = new AtomicInteger(0);
 
     private final String poolName;
     private final String jdbcUrl;
@@ -83,9 +78,7 @@ public class MackerelCan implements AutoCloseable {
                 fail = e;
             }
         }
-        if (fail != null) {
-            throw new MackerelInitException("check fail fast", fail);
-        }
+        throw new MackerelInitException("check fail fast", fail);
     }
 
     private void validateAndInitConfig(MackerelConfig config) {

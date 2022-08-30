@@ -4,7 +4,7 @@ package com.zuomagai.mackerel;
  * @author susongyan
  **/
 public class MackerelInitException extends RuntimeException {
-    
+
     public MackerelInitException(String msg) {
         super(msg);
     }

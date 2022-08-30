@@ -1,26 +1,24 @@
 package com.zuomagai.mackerel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
-import javax.sql.DataSource;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
- *
  * @author S.S.Y
  **/
 public class MackerelDataSource implements DataSource, AutoCloseable {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MackerelDataSource.class); 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MackerelDataSource.class);
     private static final int STATUS_OPEN = 1;
     private static final int STATUS_SHUTDOWN = 2;
 
-    private MackerelCan mackerelCan;
+    private final MackerelCan mackerelCan;
     private volatile int status;
 
     public MackerelDataSource(MackerelConfig config) {
@@ -50,7 +48,7 @@ public class MackerelDataSource implements DataSource, AutoCloseable {
      * mysql-connector 5.0.0 (2005-12-22)之后就支持 ServiceLoader SPI，不需要显示 Class.forName 显示注册驱动
      * pg connector Version 42.2.13 (2020-06-04) 也支持 ServiceLoader SPI了
      * 仅当 classpath 存在多个db厂商的driver 或者没提供 service-provider spi的driver，才需要显示注册驱动
-     * 
+     *
      * @param config
      */
     private void validateDriver(MackerelConfig config) {

@@ -1,16 +1,16 @@
 package com.zuomagai.mackerel;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * connection holder
- * 
+ *
  * @author S.S.Y
  **/
 public class Mackerel {
@@ -127,7 +127,7 @@ public class Mackerel {
             LOGGER.warn("close connection quietly fail", e);
         }
     }
-    
+
     public void abortQuietly(Executor executor) {
         try {
             if (!this.connection.isClosed()) {
@@ -138,7 +138,7 @@ public class Mackerel {
         } catch (SQLException e) {
             LOGGER.warn("abort connection quietly fail", e);
         }
-        
+
     }
 
     @Override
