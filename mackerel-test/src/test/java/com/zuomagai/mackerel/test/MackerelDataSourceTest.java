@@ -143,14 +143,12 @@ public class MackerelDataSourceTest {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            if (dataSource != null) {
-                try {
-                    dataSource.close();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            try {
+                dataSource.close();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } 
+        }
     }
 
     @Test
