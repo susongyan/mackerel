@@ -1,14 +1,19 @@
 package com.zuomagai.mackerel;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 卑微铲屎官，负责补足罐头里的鱼和剔除多余的
@@ -84,6 +89,7 @@ public class Feeder implements AutoCloseable {
     private boolean shouldFeed() {
         if (this.closed) {
             LOGGER.debug("feeder is closed, not feed anymore");
+            return false;
         }
         int currentSize = mackerelCan.getCurrentSize() + creatingQueue.size();
         return (mackerelCan.getMaxSize() > currentSize)
