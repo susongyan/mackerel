@@ -138,4 +138,10 @@ jdbc4.x 规范定义了 Connection#isValid(int timeout)，具体实现交给各�
 - mysql connector里边有会话机制，发送ping来检查连接活性 
 - pgsql 则是发送一个空语句(preparedStatement)
 
-所以，用这个作为检测连接活性，能发挥数据库厂商驱动自身的优化 
+所以，用这个作为检测连接活性，能发挥数据库厂商驱动自身的优化
+
+
+## todo 
+- [ ] mackerel 连接状态判断, 避免连接逃逸
+- [ ] statement/preparedStatement/connection  sql执行异常错误码判断，如果明确是连接中断的异常错误码 则需要销毁连接
+- [ ] jmx 支持，暴露连接池运行时状态

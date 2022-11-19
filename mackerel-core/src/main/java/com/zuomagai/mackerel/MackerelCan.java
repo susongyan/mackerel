@@ -1,12 +1,16 @@
 package com.zuomagai.mackerel;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 马鲛鱼罐头 (connection pool)
@@ -38,7 +42,7 @@ public class MackerelCan implements AutoCloseable {
     private volatile int maxSize;
     private volatile long maxWait;
     private volatile boolean testWhileIdle;
-    private volatile long validateWindow; // 检测窗口，间隔多久进行一次检测
+    private volatile long validateWindow; // 检测窗口，间隔多久进行一次检测
     private volatile int validateTimeout; // 检测活性超时时间
     private volatile long validateIdleTime; // testWhileIdle=true 时，如果连接空闲超过validateIdle则需要检测活性
 
