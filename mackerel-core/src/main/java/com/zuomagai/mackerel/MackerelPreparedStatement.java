@@ -24,325 +24,563 @@ import java.util.Calendar;
 /**
  * @author susongyan
  **/
-public class MackerelPreparedStatement extends MackerelStatement implements PreparedStatement{
-   
-    private PreparedStatement delegate;
+public class MackerelPreparedStatement extends MackerelStatement implements PreparedStatement {
+
+    private final PreparedStatement delegate;
+
     public MackerelPreparedStatement(PreparedStatement delegate, MackerelConnection mackerelConnection) {
         super(delegate, mackerelConnection);
-        this.delegate =  delegate; 
+        this.delegate = delegate;
     }
 
     @Override
     public ResultSet executeQuery() throws SQLException {
-        //TODO catch conn ex
-        return this.delegate.executeQuery();
+        try {
+            return this.delegate.executeQuery();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public int executeUpdate() throws SQLException {
-        //TODO catch conn ex
-        return this.delegate.executeUpdate();
+        try {
+            return this.delegate.executeUpdate();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType) throws SQLException {
-        this.delegate.setNull(parameterIndex, sqlType);
+        try {
+            this.delegate.setNull(parameterIndex, sqlType);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBoolean(int parameterIndex, boolean x) throws SQLException {
-        this.delegate.setBoolean(parameterIndex, x);
+        try {
+            this.delegate.setBoolean(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setByte(int parameterIndex, byte x) throws SQLException {
-       this.delegate.setByte(parameterIndex, x); 
+        try {
+            this.delegate.setByte(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setShort(int parameterIndex, short x) throws SQLException {
-        this.delegate.setShort(parameterIndex, x);
+        try {
+            this.delegate.setShort(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setInt(int parameterIndex, int x) throws SQLException {
-        this.delegate.setInt(parameterIndex, x);
+        try {
+            this.delegate.setInt(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setLong(int parameterIndex, long x) throws SQLException {
-        this.delegate.setLong(parameterIndex, x);
+        try {
+            this.delegate.setLong(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setFloat(int parameterIndex, float x) throws SQLException {
-        this.delegate.setFloat(parameterIndex, x);
+        try {
+            this.delegate.setFloat(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setDouble(int parameterIndex, double x) throws SQLException {
-        this.delegate.setDouble(parameterIndex, x);
+        try {
+            this.delegate.setDouble(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBigDecimal(int parameterIndex, BigDecimal x) throws SQLException {
-        this.delegate.setBigDecimal(parameterIndex, x);
+        try {
+            this.delegate.setBigDecimal(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setString(int parameterIndex, String x) throws SQLException {
-        this.delegate.setString(parameterIndex, x);
+        try {
+            this.delegate.setString(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBytes(int parameterIndex, byte[] x) throws SQLException {
-        this.delegate.setBytes(parameterIndex, x);
+        try {
+            this.delegate.setBytes(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setDate(int parameterIndex, Date x) throws SQLException {
-        this.delegate.setDate(parameterIndex, x);
+        try {
+            this.delegate.setDate(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTime(int parameterIndex, Time x) throws SQLException {
-        this.delegate.setTime(parameterIndex, x);
+        try {
+            this.delegate.setTime(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x) throws SQLException {
-        this.delegate.setTimestamp(parameterIndex, x);
+        try {
+            this.delegate.setTimestamp(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        this.delegate.setAsciiStream(parameterIndex, x, length);
+        try {
+            this.delegate.setAsciiStream(parameterIndex, x, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     @Deprecated
     public void setUnicodeStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        this.delegate.setUnicodeStream(parameterIndex, x, length);
+        try {
+            this.delegate.setUnicodeStream(parameterIndex, x, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, int length) throws SQLException {
-        this.delegate.setBinaryStream(parameterIndex, x, length);
+        try {
+            this.delegate.setBinaryStream(parameterIndex, x, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void clearParameters() throws SQLException {
-        this.delegate.clearParameters();
+        try {
+            this.delegate.clearParameters();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType) throws SQLException {
-        this.delegate.setObject(parameterIndex, x, targetSqlType);
+        try {
+            this.delegate.setObject(parameterIndex, x, targetSqlType);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setObject(int parameterIndex, Object x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setObject(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public boolean execute() throws SQLException {
-        // TODO Auto-generated method stub
-        return false;
+        try {
+            return this.delegate.execute();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void addBatch() throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.addBatch();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, int length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setCharacterStream(parameterIndex, reader, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setRef(int parameterIndex, Ref x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setRef(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBlob(int parameterIndex, Blob x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setBlob(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setClob(int parameterIndex, Clob x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setClob(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setArray(int parameterIndex, Array x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setArray(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public ResultSetMetaData getMetaData() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return this.delegate.getMetaData();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setDate(int parameterIndex, Date x, Calendar cal) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setDate(parameterIndex, x, cal);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTime(int parameterIndex, Time x, Calendar cal) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setTime(parameterIndex, x, cal);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTimestamp(int parameterIndex, Timestamp x, Calendar cal) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setTimestamp(parameterIndex, x, cal);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNull(int parameterIndex, int sqlType, String typeName) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNull(parameterIndex, sqlType, typeName);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setURL(int parameterIndex, URL x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setURL(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public ParameterMetaData getParameterMetaData() throws SQLException {
-        // TODO Auto-generated method stub
-        return null;
+        try {
+            return this.delegate.getParameterMetaData();
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setRowId(int parameterIndex, RowId x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setRowId(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNString(int parameterIndex, String value) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNString(parameterIndex, value);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNCharacterStream(parameterIndex, value, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNClob(int parameterIndex, NClob value) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNClob(parameterIndex, value);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setClob(parameterIndex, reader, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setBlob(parameterIndex, inputStream, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNClob(parameterIndex, reader, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setSQLXML(parameterIndex, xmlObject);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setObject(int parameterIndex, Object x, int targetSqlType, int scaleOrLength) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setObject(parameterIndex, x, targetSqlType, scaleOrLength);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setAsciiStream(parameterIndex, x, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setBinaryStream(parameterIndex, x, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader, long length) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setCharacterStream(parameterIndex, reader, length);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setAsciiStream(int parameterIndex, InputStream x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setAsciiStream(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBinaryStream(int parameterIndex, InputStream x) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setBinaryStream(parameterIndex, x);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setCharacterStream(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setCharacterStream(parameterIndex, reader);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNCharacterStream(parameterIndex, value);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setClob(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setClob(parameterIndex, reader);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setBlob(parameterIndex, inputStream);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setNClob(int parameterIndex, Reader reader) throws SQLException {
-        // TODO Auto-generated method stub
-        
+        try {
+            this.delegate.setNClob(parameterIndex, reader);
+        } catch (SQLException e) {
+            this.checkException(e);
+            throw e;
+        }
     }
-   
-
 }

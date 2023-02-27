@@ -20,6 +20,6 @@ public enum EnumDriver {
                 return supportedDriver.driverName;
             }
         }
-        throw new IllegalArgumentException("unsupported driver by macherel, jdbcUrl=" + jdbcUrl);
+        throw new IllegalArgumentException("unsupported driver by mackerel, jdbcUrl=" + jdbcUrl);
     }
 }

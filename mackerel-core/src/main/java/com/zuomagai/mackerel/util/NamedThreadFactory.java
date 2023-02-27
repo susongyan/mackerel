@@ -1,4 +1,4 @@
-package com.zuomagai.mackerel;
+package com.zuomagai.mackerel.util;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;

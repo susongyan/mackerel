@@ -242,8 +242,8 @@ public class MackerelCan implements AutoCloseable {
         return maxIdleTime;
     }
 
-    public int getCurrentSize() {
-        return mackerels.size();
+    public int getAliveSize() {
+        return (int)mackerels.stream().filter(mackerel -> !mackerel.isEvicted()).count();
     }
 
     public int getWaitingThreadCount() {
@@ -270,11 +270,11 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public String getStatistics() {
-        return "total=" + this.mackerels.size() + ", idle=" + idleMackerels.size() + ", waiting=" + waitingThreadCount.get();
+        return "total=" + getAliveSize() + ", idle=" + idleMackerels.size() + ", waiting=" + waitingThreadCount.get();
     }
 
     @Override
-    public void close() throws Exception {
+    public void close() {
         LOGGER.debug("closing MackerelCan...");
 
         this.closed = true;

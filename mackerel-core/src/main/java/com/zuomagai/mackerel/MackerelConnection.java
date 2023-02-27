@@ -20,14 +20,18 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.Executor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.zuomagai.mackerel.util.StringUtils;
 
+import javax.naming.SizeLimitExceededException;
+
 /**
  * proxy connection (1) close => return to pool (2) do some statics monitor
- * 
- *  TODO catch conn ex 
+ * <p>
+ *  TODO catch conn ex
+ *
  * @author S.S.Y
  **/
 public class MackerelConnection implements Connection {
@@ -40,6 +44,9 @@ public class MackerelConnection implements Connection {
     private Mackerel mackerel;
     private Connection delegate;
 
+    /**
+     * 物理连接是否关闭
+     */
     private boolean isClosed = false;
     private boolean autoCommit = DEFAULT_AUTO_COMMIT;
     private boolean readOnly = DEFAULT_READ_ONLY;
@@ -66,6 +73,9 @@ public class MackerelConnection implements Connection {
 
     @Override
     public void close() throws SQLException {
+        if (this.isClosed) {
+            return;
+        }
         // reset connection first
         reset();
         // cas status first & return pool
@@ -165,99 +175,179 @@ public class MackerelConnection implements Connection {
 
     @Override
     public void commit() throws SQLException {
-        checkState();
-        delegate.commit();
+        try {
+            checkState();
+            delegate.commit();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
-        checkState();
-        return delegate.createArrayOf(typeName, elements);
+        try {
+            checkState();
+            return delegate.createArrayOf(typeName, elements);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Blob createBlob() throws SQLException {
-        checkState();
-        return delegate.createBlob();
+        try {
+            checkState();
+            return delegate.createBlob();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Clob createClob() throws SQLException {
-        checkState();
-        return delegate.createClob();
+        try {
+            checkState();
+            return delegate.createClob();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public NClob createNClob() throws SQLException {
-        checkState();
-        return delegate.createNClob();
+        try {
+            checkState();
+            return delegate.createNClob();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public SQLXML createSQLXML() throws SQLException {
-        checkState();
-        return delegate.createSQLXML();
+        try {
+            checkState();
+            return delegate.createSQLXML();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Statement createStatement() throws SQLException {
-        checkState();
-        return delegate.createStatement();
+        try {
+            checkState();
+            return new MackerelStatement(delegate.createStatement(), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkState();
-        return delegate.createStatement(resultSetType, resultSetConcurrency);
+        try {
+            checkState();
+            return new MackerelStatement(delegate.createStatement(resultSetType, resultSetConcurrency), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Statement createStatement(int resultSetType, int resultSetConcurrency, int resultSetHoldability)
             throws SQLException {
-        checkState();
-        return delegate.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+        try {
+            checkState();
+            return new MackerelStatement(delegate.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
-        checkState();
-        return delegate.createStruct(typeName, attributes);
+        try {
+            checkState();
+            return delegate.createStruct(typeName, attributes);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public boolean getAutoCommit() throws SQLException {
-        checkState();
-        return delegate.getAutoCommit();
+        try {
+            checkState();
+            return delegate.getAutoCommit();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public String getCatalog() throws SQLException {
-        checkState();
-        return delegate.getCatalog();
+        try {
+            checkState();
+            return delegate.getCatalog();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Properties getClientInfo() throws SQLException {
-        checkState();
-        return delegate.getClientInfo();
+        try {
+            checkState();
+            return delegate.getClientInfo();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public String getClientInfo(String name) throws SQLException {
-        checkState();
-        return delegate.getClientInfo(name);
+        try {
+            checkState();
+            return delegate.getClientInfo(name);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public int getHoldability() throws SQLException {
-        checkState();
-        return delegate.getHoldability();
+        try {
+            checkState();
+            return delegate.getHoldability();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public DatabaseMetaData getMetaData() throws SQLException {
-        checkState();
-        return delegate.getMetaData();
+        try {
+            checkState();
+            return delegate.getMetaData();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
@@ -267,26 +357,47 @@ public class MackerelConnection implements Connection {
 
     @Override
     public String getSchema() throws SQLException {
-        checkState();
-        return delegate.getSchema();
+        try {
+            checkState();
+            return delegate.getSchema();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public int getTransactionIsolation() throws SQLException {
-        checkState();
-        return delegate.getTransactionIsolation();
+        try {
+            checkState();
+            return delegate.getTransactionIsolation();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Map<String, Class<?>> getTypeMap() throws SQLException {
-        checkState();
-        return delegate.getTypeMap();
+        try {
+            checkState();
+            return delegate.getTypeMap();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public SQLWarning getWarnings() throws SQLException {
-        checkState();
-        return delegate.getWarnings();
+        try {
+            checkState();
+            return delegate.getWarnings();
+        } catch (
+                SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
@@ -296,126 +407,219 @@ public class MackerelConnection implements Connection {
 
     @Override
     public boolean isReadOnly() throws SQLException {
-        checkState();
-        return delegate.isReadOnly();
+        return this.readOnly;
     }
 
     @Override
     public boolean isValid(int timeout) throws SQLException {
-        checkState();
-        return delegate.isValid(timeout);
+        try {
+            checkState();
+            return delegate.isValid(timeout);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public String nativeSQL(String sql) throws SQLException {
-        checkState();
-        return delegate.nativeSQL(sql);
+        try {
+            checkState();
+            return delegate.nativeSQL(sql);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public CallableStatement prepareCall(String sql) throws SQLException {
-        checkState();
-        return delegate.prepareCall(sql);
+        try {
+            checkState();
+            return delegate.prepareCall(sql);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency) throws SQLException {
-        checkState();
-        return delegate.prepareCall(sql, resultSetType, resultSetConcurrency);
+        try {
+            checkState();
+            return delegate.prepareCall(sql, resultSetType, resultSetConcurrency);
+
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public CallableStatement prepareCall(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException {
-        checkState();
-        return delegate.prepareCall(sql, resultSetType, resultSetConcurrency);
+                                         int resultSetHoldability) throws SQLException {
+        try {
+            checkState();
+            return delegate.prepareCall(sql, resultSetType, resultSetConcurrency);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql) throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql);
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys) throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql, autoGeneratedKeys);
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql, autoGeneratedKeys), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int[] columnIndexes) throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql, columnIndexes);
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql, columnIndexes), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, String[] columnNames) throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql, columnNames);
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql, columnNames), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency)
             throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql, resultSetType, resultSetConcurrency);
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql, resultSetType, resultSetConcurrency), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public PreparedStatement prepareStatement(String sql, int resultSetType, int resultSetConcurrency,
-            int resultSetHoldability) throws SQLException {
-        checkState();
-        return delegate.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+                                              int resultSetHoldability) throws SQLException {
+        try {
+            checkState();
+            return new MackerelPreparedStatement(delegate.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability), this);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void releaseSavepoint(Savepoint savepoint) throws SQLException {
-        checkState();
-        delegate.releaseSavepoint(savepoint);
+        try {
+            checkState();
+            delegate.releaseSavepoint(savepoint);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void rollback() throws SQLException {
-        checkState();
-        delegate.rollback();
+        try {
+            checkState();
+            delegate.rollback();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void rollback(Savepoint savepoint) throws SQLException {
-        checkState();
-        delegate.rollback(savepoint);
+        try {
+            checkState();
+            delegate.rollback(savepoint);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setAutoCommit(boolean autoCommit) throws SQLException {
-        checkState();
-        delegate.setAutoCommit(autoCommit);
-        this.autoCommit = autoCommit;
+        try {
+            checkState();
+            delegate.setAutoCommit(autoCommit);
+            this.autoCommit = autoCommit;
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setCatalog(String catalog) throws SQLException {
-        checkState();
-        delegate.setCatalog(catalog);
-        this.catalog = catalog;
+        try {
+            checkState();
+            delegate.setCatalog(catalog);
+            this.catalog = catalog;
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setClientInfo(Properties properties) throws SQLClientInfoException {
-        //TODO 特殊处理
-        delegate.setClientInfo(properties);
+        try {
+            delegate.setClientInfo(properties);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setClientInfo(String name, String value) throws SQLClientInfoException {
-        //TODO 特殊处理
-        delegate.setClientInfo(name, value);
+        try {
+            delegate.setClientInfo(name, value);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setHoldability(int holdability) throws SQLException {
-        delegate.setHoldability(holdability);
+        try {
+            delegate.setHoldability(holdability);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
@@ -425,41 +629,71 @@ public class MackerelConnection implements Connection {
 
     @Override
     public void setReadOnly(boolean readOnly) throws SQLException {
-        checkState();
-        delegate.setReadOnly(readOnly);
-        this.readOnly = readOnly;
+        try {
+            checkState();
+            delegate.setReadOnly(readOnly);
+            this.readOnly = readOnly;
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Savepoint setSavepoint() throws SQLException {
-        checkState();
-        return delegate.setSavepoint();
+        try {
+            checkState();
+            return delegate.setSavepoint();
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public Savepoint setSavepoint(String name) throws SQLException {
-        checkState();
-        return delegate.setSavepoint(name);
+        try {
+            checkState();
+            return delegate.setSavepoint(name);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setSchema(String schema) throws SQLException {
-        checkState();
-        delegate.setSchema(schema);
-        this.schema = schema;
+        try {
+            checkState();
+            delegate.setSchema(schema);
+            this.schema = schema;
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTransactionIsolation(int level) throws SQLException {
-        checkState();
-        delegate.setTransactionIsolation(level);
-        this.transactionIsolation = level;
+        try {
+            checkState();
+            delegate.setTransactionIsolation(level);
+            this.transactionIsolation = level;
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
 
     @Override
     public void setTypeMap(Map<String, Class<?>> map) throws SQLException {
-        checkState();
-        delegate.setTypeMap(map);
+        try {
+            checkState();
+            delegate.setTypeMap(map);
+        } catch (SQLException e) {
+            checkException(e);
+            throw e;
+        }
     }
     // endregion
 
@@ -479,22 +713,19 @@ public class MackerelConnection implements Connection {
 
     /**
      * 抛出原生的 SQLException 是为了方便 业务在使用的时候，根据原始sqlException 做判断
-     * 
+     *
      * @throws SQLException
      */
     private void checkState() throws SQLException {
         if (this.isClosed) {
             throw new SQLException("Connection is closed");
-        }     
+        }
     }
 
-    /**
-     * //TODO  判断sql 执行遇到的连接异常的错误
-     * 
-     * @param sqlEx
-     */
-     void checkException(SQLException sqlEx) {
-
-     }
-
+    public void checkException(SQLException sqlEx) {
+        // f connection broken, recycle it
+        if (Cat.checkSmelly(sqlEx)) {
+            this.mackerel.quit();
+        }
+    }
 }
