@@ -1,21 +1,20 @@
 package com.zuomagai.mackerel;
 
+import com.zuomagai.mackerel.util.NamedThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
-import com.zuomagai.mackerel.util.NamedThreadFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 卑微铲屎官，负责补足罐头里的鱼和剔除多余的
@@ -74,7 +73,7 @@ public class Feeder implements AutoCloseable {
     }
 
     public void incubateMackerel() throws SQLException {
-        Connection connection = null;
+        Connection connection;
         long start = System.currentTimeMillis();
         LOGGER.debug("-------creating new connection ------");
         connection = DriverManager.getConnection(mackerelCan.getJdbcUrl(), mackerelCan.getUserName(),
@@ -97,8 +96,8 @@ public class Feeder implements AutoCloseable {
     }
 
     static class Shovel implements Runnable {
-        private Feeder feeder;
-        private MackerelCan can;
+        private final Feeder feeder;
+        private final MackerelCan can;
 
         public Shovel(Feeder feeder, MackerelCan can) {
             this.feeder = feeder;
@@ -113,9 +112,7 @@ public class Feeder implements AutoCloseable {
             int currentTotal = snapshot.size();
 
             List<Mackerel> toEvicts = new ArrayList<>();
-            for (int i = 0; i < snapshot.size(); i++) {
-                Mackerel underTest = snapshot.get(i);
-
+            for (Mackerel underTest : snapshot) {
                 // 清理 testWhileIdle 阶段标记的不可用连接
                 if (underTest.isEvicted()) {
                     LOGGER.debug("shoveling... found {} evicted!!! going to sweep it", underTest);
