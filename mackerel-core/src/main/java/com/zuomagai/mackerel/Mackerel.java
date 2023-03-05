@@ -70,6 +70,10 @@ public class Mackerel {
         return status.compareAndSet(STATUS_RESERVED, STATUS_EVICTED);
     }
 
+    public void forceMarkEvicted() {
+        status.set(STATUS_EVICTED);
+    }
+
     public MackerelCan getMackerelCan() {
         return this.mackerelCan;
     }
@@ -80,13 +84,6 @@ public class Mackerel {
 
     public long getLastValidateDuration() {
         return System.currentTimeMillis() - lastValidateTime;
-    }
-
-    public boolean takenOut() {
-        boolean ret = status.compareAndSet(STATUS_IDLE, STATUS_ACTIVE);
-        if (ret)
-            lastTakenOutTime = System.currentTimeMillis();
-        return ret;
     }
 
     public boolean backToCan() {
@@ -115,6 +112,10 @@ public class Mackerel {
         }
     }
 
+    public void quit() {
+        this.status.set(STATUS_EVICTED);
+    }
+
     public void closeQuietly() {
         try {
             if (!this.connection.isClosed()) {
@@ -137,7 +138,6 @@ public class Mackerel {
         } catch (SQLException e) {
             LOGGER.warn("abort connection quietly fail", e);
         }
-
     }
 
     @Override

@@ -126,7 +126,7 @@ sql执行抛出异常，可能是因为sql语法有问题、结果集太大导�
 - 而不调整 validateWindow, 活性校验就不够及时
 
 其实最终的目的是保证交付给用户的连接是可用的，那么在交付前如果连接空闲超过 validateIdleTime(这个可以设置得比 window小很多) 才去校验连接有效性，就能确保校验的时效性
-- 校验的频率和连接使用方有关，当连接获取频繁的时候，连接idle时长 < validateIdleTime 不需要进行 validate 不会影响性能； 
+- 校验的频率和连接使用方有关，当连接获取频繁的时候，连接idle时长 < validateIdleTime 不需要进行 validate 不会影响性能； 
 - 在连接池负载低峰期不至于太浪费资源，也不会对db服务端造成太大压力
 - 校验线程和用户获取连接之间也不会存在资源竞争
 hikari 和 druid 的选择是对的
@@ -142,6 +142,6 @@ jdbc4.x 规范定义了 Connection#isValid(int timeout)，具体实现交给各�
 
 
 ## todo 
-- [ ] mackerel 连接状态判断, 避免连接逃逸
-- [ ] statement/preparedStatement/connection  sql执行异常错误码判断，如果明确是连接中断的异常错误码 则需要销毁连接
+- [x] mackerel 连接状态判断, 避免连接逃逸
+- [x] statement/preparedStatement/connection  sql执行异常错误码判断，如果明确是连接中断的异常错误码 则需要销毁连接
 - [ ] jmx 支持，暴露连接池运行时状态

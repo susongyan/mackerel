@@ -1,19 +1,20 @@
 package com.zuomagai.mackerel;
 
+import com.zuomagai.mackerel.util.NamedThreadFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 卑微铲屎官，负责补足罐头里的鱼和剔除多余的
@@ -41,7 +42,7 @@ public class Feeder implements AutoCloseable {
         sweepExecutor = new ThreadPoolExecutor(1, 1, 0, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
                 new NamedThreadFactory("mackerel-sweeper-thread"));
         shovelScheduler = new ScheduledThreadPoolExecutor(1, new NamedThreadFactory("mackerel-shovel-thread"));
-        shovelScheduler.scheduleAtFixedRate(new Shovel(this, this.sweepExecutor, this.mackerelCan),
+        shovelScheduler.scheduleAtFixedRate(new Shovel(this, this.mackerelCan),
                 mackerelCan.getValidateWindow(), mackerelCan.getValidateWindow(), TimeUnit.MILLISECONDS);
         feed(mackerelCan.getMinIdle());
     }
@@ -50,14 +51,12 @@ public class Feeder implements AutoCloseable {
         if (number <= 0)
             return;
         for (int i = 0; i < number; i++) {
-            feedExecutor.execute(() -> {
-                feedOneMackerel();
-            });
+            feedExecutor.execute(this::feedOneMackerel);
         }
     }
 
     public void feed() {
-        int toFeed = mackerelCan.getMinIdle() - mackerelCan.getCurrentSize();
+        int toFeed = mackerelCan.getMinIdle() - mackerelCan.getAliveSize();
         if (toFeed > 0)
             feed(toFeed);
     }
@@ -74,7 +73,7 @@ public class Feeder implements AutoCloseable {
     }
 
     public void incubateMackerel() throws SQLException {
-        Connection connection = null;
+        Connection connection;
         long start = System.currentTimeMillis();
         LOGGER.debug("-------creating new connection ------");
         connection = DriverManager.getConnection(mackerelCan.getJdbcUrl(), mackerelCan.getUserName(),
@@ -82,7 +81,7 @@ public class Feeder implements AutoCloseable {
         Mackerel mackerel = new Mackerel(mackerelCan, connection);
         mackerelCan.add(mackerel);
         LOGGER.debug("--> create success (" + (System.currentTimeMillis() - start) + "ms): current="
-                + mackerelCan.getCurrentSize() + ",creating=" + creatingQueue.size() + ",max="
+                + mackerelCan.getAliveSize() + ",creating=" + creatingQueue.size() + ",max="
                 + mackerelCan.getMaxSize());
     }
 
@@ -91,19 +90,17 @@ public class Feeder implements AutoCloseable {
             LOGGER.debug("feeder is closed, not feed anymore");
             return false;
         }
-        int currentSize = mackerelCan.getCurrentSize() + creatingQueue.size();
+        int currentSize = mackerelCan.getAliveSize() + creatingQueue.size();
         return (mackerelCan.getMaxSize() > currentSize)
                 && (mackerelCan.getWaitingThreadCount() > 0 || currentSize < mackerelCan.getMinIdle());
     }
 
     static class Shovel implements Runnable {
-        private Feeder feeder;
-        private MackerelCan can;
-        private ExecutorService sweeper;
+        private final Feeder feeder;
+        private final MackerelCan can;
 
-        public Shovel(Feeder feeder, ExecutorService sweeper, MackerelCan can) {
+        public Shovel(Feeder feeder, MackerelCan can) {
             this.feeder = feeder;
-            this.sweeper = sweeper;
             this.can = can;
         }
 
@@ -115,9 +112,7 @@ public class Feeder implements AutoCloseable {
             int currentTotal = snapshot.size();
 
             List<Mackerel> toEvicts = new ArrayList<>();
-            for (int i = 0; i < snapshot.size(); i++) {
-                Mackerel underTest = snapshot.get(i);
-
+            for (Mackerel underTest : snapshot) {
                 // 清理 testWhileIdle 阶段标记的不可用连接
                 if (underTest.isEvicted()) {
                     LOGGER.debug("shoveling... found {} evicted!!! going to sweep it", underTest);
@@ -155,19 +150,23 @@ public class Feeder implements AutoCloseable {
 
             LOGGER.debug("shoveling... found {} mackerels need be evicted", toEvicts.size());
             if (toEvicts.size() > 0) {
-                // 先移除这些待关闭的连接， 以免 shouldFeed() 判断不准
                 can.remove(toEvicts);
-                // close quitely
+                // close quietly
                 for (Mackerel toEvict : toEvicts) {
-                    sweeper.execute(() -> {
-                        LOGGER.debug("sweeping " + toEvict);
-                        toEvict.closeQuietly();
-                    });
+                    this.feeder.sweep(toEvict);
                 }
             }
             // 补足连接
             feeder.feed();
         }
+    }
+
+    public void sweep(Mackerel toSweep) {
+        this.sweepExecutor.execute(() -> {
+            LOGGER.debug("sweeping " + toSweep);
+            toSweep.closeQuietly();
+        });
+
     }
 
     @Override
