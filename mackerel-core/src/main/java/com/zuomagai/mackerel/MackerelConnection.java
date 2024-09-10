@@ -25,7 +25,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.zuomagai.mackerel.util.StringUtils;
 
-import javax.naming.SizeLimitExceededException;
 
 /**
  * proxy connection (1) close => return to pool (2) do some statics monitor
