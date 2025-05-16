@@ -6,7 +6,7 @@ package com.zuomagai.mackerel.util;
 public class StringUtils {
 
     public static boolean isEmpty(String input) {
-        return input == null || input.length() == 0;
+        return input == null || input.isEmpty();
     }
 
     public static boolean isNotEmpty(String input) {

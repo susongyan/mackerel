@@ -1,16 +1,12 @@
 package com.zuomagai.mackerel;
 
-import java.sql.SQLException;
-import java.util.List;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.sql.SQLException;
+import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * 马鲛鱼罐头 (connection pool)
@@ -243,7 +239,11 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public int getAliveSize() {
-        return (int)mackerels.stream().filter(mackerel -> !mackerel.isEvicted()).count();
+        return (int) mackerels.stream().filter(mackerel -> !mackerel.isEvicted()).count();
+    }
+
+    public int getIdleSize() {
+        return idleMackerels.size();
     }
 
     public int getWaitingThreadCount() {
@@ -270,7 +270,7 @@ public class MackerelCan implements AutoCloseable {
     }
 
     public String getStatistics() {
-        return "total=" + getAliveSize() + ", idle=" + idleMackerels.size() + ", waiting=" + waitingThreadCount.get();
+        return "total=" + getAliveSize() + ", idle=" + getIdleSize() + ", waiting=" + getWaitingThreadCount();
     }
 
     @Override

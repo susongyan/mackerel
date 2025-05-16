@@ -13,13 +13,26 @@
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <maven.compiler.encoding>UTF-8</maven.compiler.encoding>
+
+        <slf4j.version>1.7.30</slf4j.version>
+        <micrometer.version>1.14.6</micrometer.version>
     </properties>
 
     <modules>
         <module>mackerel-core</module>
         <module>mackerel-test</module>
     </modules>
-    
+
     <dependencies>
     </dependencies>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-core</artifactId>
+                <version>${micrometer.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 </project>
