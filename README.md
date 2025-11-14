@@ -37,7 +37,8 @@ maxIdleTime
 - 连接可能维持很久，一直占着数据库服务端连接的资源 
 
 个人倾向： maxIdleTime
-- 低峰期，保证maxIdle < wati_time < 低峰时段，就能保证进入高峰期的时候，不会说都需要重新建立连接，影响请求rt 和 db瞬时连接压力
+- 低峰期，保证maxIdle < wait_time < 低峰时段，就能保证进入高峰期的时候，不会说都需要重新建立连接，影响请求rt 和 db瞬时连接压力
+- 如果还要 hikariCP maxLifetime 的强制刷新，快速释放服务端连接的内存压力， 可以考虑同时支持； commons-pool GenericObjectPool 的一个冷门配置项 softMinEvictableIdleTimeMillis 就有maxLifeTime的能力
 
 ## 连接异常断开如何快速发现？
 - 在数据库升级的时候，短时间内连接可能会全部不可用
@@ -88,7 +89,7 @@ based on jdbc4+, [jdbc4 specification](https://download.oracle.com/otndocs/jcp/j
 - void setClientInfo(String name, String value) / void setClientInfo(Properties properties) // 设置客户端信息（ApplicationName、ClientUser、ClientHostname), 不会对服务端sql执行有影响，只在客户端测用来做诊断、调试
 - void setNetworkTimeout(Executor executor, int milliseconds) throws SQLException; // 设置连接级别的网络超时时长，超过这个时间则认为连接已关闭; pg不支持
 
-对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、transactionIsolation、networkTimeout, 在获取db连接的这些属性的初始值以及修改的时候，要根据数据库厂商的驱动实现来处理异常； 比如 pg 对networkTimeout的操作是直接抛出异常的，得忽略掉；而在修改 catalog、schema、transactionIsolation的时候，可能由于参数在服务端不合法 这个时候抛出的异常就得处理了
+对sql在当前连接会话上执行有影响的属性：autoCommit、readOnly、catalog、schema、transactionIsolation、 networkTimeout, 在获取db连接的这些属性的初始值以及修改的时候，要根据数据库厂商的驱动实现来处理异常； 比如 pg 对networkTimeout的操作是直接抛出异常的，得忽略掉；而在修改 catalog、schema、transactionIsolation的时候，可能由于参数在服务端不合法 这个时候抛出的异常就得处理了
 
 ## 何时检测连接活性
 由于网络问题、数据库服务端问题、服务端连接超时等 可能在任何时间发生，所以db物理连接随时都可能变为不可用；
