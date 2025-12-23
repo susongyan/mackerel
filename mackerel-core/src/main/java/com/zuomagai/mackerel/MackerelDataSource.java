@@ -32,6 +32,10 @@ public class MackerelDataSource implements DataSource, AutoCloseable {
         insureOpen();
     }
 
+    public MackerelCan getMackerelCan() {
+        return mackerelCan;
+    }
+
     @Override
     public Connection getConnection() throws SQLException {
         insureOpen();
