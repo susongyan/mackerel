@@ -3,7 +3,7 @@ package com.zuomagai.mackerel.util;
 import java.sql.SQLException;
 
 /**
- * @author S.S.Y
+ * @author susongyan
  **/
 public class JdbcUtils {
 

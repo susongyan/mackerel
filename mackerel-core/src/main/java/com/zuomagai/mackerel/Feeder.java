@@ -19,7 +19,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 卑微铲屎官，负责补足罐头里的鱼和剔除多余的
  *
- * @author S.S.Y
+ * @author susongyan
  */
 public class Feeder implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Feeder.class);

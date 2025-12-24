@@ -31,7 +31,7 @@ import com.zuomagai.mackerel.util.StringUtils;
  * <p>
  *  TODO catch conn ex
  *
- * @author S.S.Y
+ * @author susongyan
  **/
 public class MackerelConnection implements Connection {
     private static final Logger LOGGER = LoggerFactory.getLogger(MackerelConnection.class);

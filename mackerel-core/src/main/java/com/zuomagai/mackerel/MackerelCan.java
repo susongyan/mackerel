@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * 马鲛鱼罐头 (connection pool)
  *
- * @author S.S.Y
+ * @author susongyan
  **/
 public class MackerelCan implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MackerelCan.class);

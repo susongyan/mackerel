@@ -1,7 +1,7 @@
 package com.zuomagai.mackerel;
 
 /**
- * @author S.S.Y
+ * @author susongyan
  **/
 public class MackerelException extends RuntimeException {
 

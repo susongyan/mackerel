@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 /**
  * connection holder
  *
- * @author S.S.Y
+ * @author susongyan
  **/
 public class Mackerel {
     private static final Logger LOGGER = LoggerFactory.getLogger(Mackerel.class);

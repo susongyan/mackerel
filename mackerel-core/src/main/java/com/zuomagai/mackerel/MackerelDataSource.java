@@ -11,7 +11,7 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 
 /**
- * @author S.S.Y
+ * @author susongyan
  **/
 public class MackerelDataSource implements DataSource, AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(MackerelDataSource.class);

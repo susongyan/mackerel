@@ -1,7 +1,7 @@
 package com.zuomagai.mackerel.util;
 
 /**
- * @author S.S.Y
+ * @author susongyan
  **/
 public class StringUtils {
 
