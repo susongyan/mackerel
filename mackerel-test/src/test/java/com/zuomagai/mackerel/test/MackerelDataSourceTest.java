@@ -1,14 +1,17 @@
 package com.zuomagai.mackerel.test;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import com.zuomagai.mackerel.MackerelConfig;
 import com.zuomagai.mackerel.MackerelDataSource;
 
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,9 +19,21 @@ import org.slf4j.LoggerFactory;
 public class MackerelDataSourceTest {
     private static final Logger LOGGER =  LoggerFactory.getLogger(MackerelDataSourceTest.class);
 
-    private static final String jdbcUrl = "jdbc:mysql://127.0.0.1:3307/test?socketTimeout=5000&connectTimeout=5000";
-    private static final String userName = "root";
-    private static final String password = "root";
+    private static final String jdbcUrl =
+            "jdbc:h2:mem:mackerel_test;MODE=MySQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false";
+    private static final String userName = "sa";
+    private static final String password = "";
+
+    @BeforeClass
+    public static void initSchema() throws SQLException {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, userName, password);
+                Statement statement = connection.createStatement()) {
+            statement.execute("DROP TABLE IF EXISTS t_user");
+            statement.execute("CREATE TABLE t_user (id BIGINT PRIMARY KEY, name VARCHAR(64), age INT)");
+            statement.execute("INSERT INTO t_user (id, name, age) VALUES (1, 'alice', 20)");
+            statement.execute("INSERT INTO t_user (id, name, age) VALUES (2, 'bob', 30)");
+        }
+    }
 
     @Test
     public void basicUsage() {
